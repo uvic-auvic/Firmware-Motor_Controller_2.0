@@ -558,6 +558,10 @@ typedef struct
 #define TIM_IT_COM                         ((uint16_t)0x0020)
 #define TIM_IT_Trigger                     ((uint16_t)0x0040)
 #define TIM_IT_Break                       ((uint16_t)0x0080)
+#define TIM_IT_CC1DE					   ((uint16_t)0x0200)
+#define TIM_IT_CC2DE					   ((uint16_t)0x0400)
+#define TIM_IT_CC3DE					   ((uint16_t)0x0800)
+#define TIM_IT_CC4DE					   ((uint16_t)0x1000)
 #define IS_TIM_IT(IT) ((((IT) & (uint16_t)0xFF00) == 0x0000) && ((IT) != 0x0000))
 
 #define IS_TIM_GET_IT(IT) (((IT) == TIM_IT_Update) || \
