@@ -41,7 +41,7 @@ void updateRPM(void *dummy){
 
 	while(1){
 		d = ((d+1) % TESTING_SAMPLES);
-		all_freqs[d] = get_hz();
+		all_freqs[d] = get_rpm();
 		vTaskDelay(500);
 	}
 }
