@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include "pwm_in.h"
 
-const uint32_t cc1_data[ARRAYSIZE];
+uint32_t cc1_data[ARRAYSIZE];
 
 void init_timer5(){
 	/*enable peripheral clock for TIM5 */
@@ -22,8 +22,8 @@ void init_timer5(){
 	/* Time base configuration */
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 
-	TIM_TimeBaseStructure.TIM_Period = (100 * 1000 * 1000) - 1; // 600 kHz down to 60Hz (2 ms)
-	TIM_TimeBaseStructure.TIM_Prescaler = 1 - 1; // 48 MHz Clock down to 600 kHz (adjust per your clock)
+	TIM_TimeBaseStructure.TIM_Period = _10_MHZ - 1; // 600 kHz down to 60Hz (2 ms)
+	TIM_TimeBaseStructure.TIM_Prescaler = 10 - 1; // 48 MHz Clock down to 600 kHz (adjust per your clock)
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
@@ -119,7 +119,49 @@ extern void init_pwm_in(){
 	init_DMA();
 }
 
-extern uint32_t get_hz(){
+void reset_freq_data(){
+	uint8_t k = 0;
+	for(k=0; k < ARRAYSIZE; k++){
+		cc1_data[k] = 0;
+	}
+}
+
+extern uint32_t get_rpm(){
+	//need to stop raw data from updating
+	TIM5->DIER &= ~TIM_IT_CC1DE;
+
+	uint8_t idx = (ARRAYSIZE - (DMA1_Stream2->NDTR));
+	uint8_t stop_idx = ((idx + ARRAYSIZE)-1)%ARRAYSIZE;
+	uint32_t diff = 0;
+	uint32_t temp = 0;
+	/*
+	 *	We need to get the current index that is being placed into: (ARRAYSIZE - DMA1_Stream2->NDTR)
+	 *	We go up to <= instead of the typical < because we want to go one less than normal
+	 *
+	 */
+	for(idx = (ARRAYSIZE - DMA1_Stream2->NDTR); idx != stop_idx; idx = ((idx + 1) %  ARRAYSIZE)){
+		if(cc1_data[(idx+1) % ARRAYSIZE] > cc1_data[idx % ARRAYSIZE]){
+			diff = cc1_data[(idx+1) % ARRAYSIZE] - cc1_data[idx % ARRAYSIZE];
+		}else{//if not bigger, must be smaller
+			diff = (_10_MHZ - cc1_data[idx % ARRAYSIZE]) + cc1_data[(idx+1) % ARRAYSIZE];
+		}
+		temp += diff;
+	}
+
+	//make sure to run back on the DMA
+	//reset_freq_data();
+	TIM5->DIER |= TIM_IT_CC1DE;
+
+	uint32_t temp2 = 0;
+
+	temp = temp / 9;
+	temp2 = ( (60*_10_MHZ) / temp);
+
+	return temp2;
+}
+
+/*
+extern uint32_t get_rpm_old(){
 	//need to stop raw data from updating
 	TIM5->DIER &= ~TIM_IT_CC1DE;
 
@@ -127,17 +169,30 @@ extern uint32_t get_hz(){
 	uint8_t dividor = 0;
 	uint32_t diff = 0;
 	uint32_t temp = 0;
+	uint32_t biggest = 0;
 	for(k=0; k < ARRAYSIZE; k++){
 		if(cc1_data[(k+1) % ARRAYSIZE] > cc1_data[k]){
 			diff = cc1_data[(k+1) % ARRAYSIZE] - cc1_data[k];
 			temp += diff;
 			dividor++;
 		}
+		//The biggest sample is most likely due an overflow coming around
+		if(biggest < diff){
+			biggest = diff;
+		}
 	}
 
 	//make sure to run back on the DMA
+	//reset_freq_data();
 	TIM5->DIER |= TIM_IT_CC1DE;
 
-	temp = temp / dividor;
-	return _100_MHZ / temp;
+	uint32_t temp2 = 0;
+
+	temp = (temp - biggest) / (dividor - 1);
+	temp2 = ( (60*_10_MHZ) / temp);
+	if(temp2 < 1000){
+		temp = 777;
+	}
+	return temp2;
 }
+*/

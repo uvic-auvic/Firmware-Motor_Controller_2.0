@@ -18,6 +18,11 @@
 #include "PWM_in.h"
 #include "LEDs.h"
 
+//#include "UART.h"
+//#include "FSM.h"
+//#include "Buffer.h"
+#include "simple_UART.h"
+
 #include "FreeRTOSConfig.h"
 
 #include "FreeRTOS.h"
@@ -25,8 +30,6 @@
 
 #define TESTING_SAMPLES		(2000)
 uint32_t all_freqs[TESTING_SAMPLES];
-
-bool do_freq_calc = false;
 
 void blinkyTask(void *dummy){
 	while(1){
@@ -41,8 +44,17 @@ void updateRPM(void *dummy){
 
 	while(1){
 		d = ((d+1) % TESTING_SAMPLES);
-		all_freqs[d] = get_hz();
+		all_freqs[d] = get_rpm();
 		vTaskDelay(500);
+	}
+}
+
+void UART(void *dummy){
+	UART_init();
+
+	while(1){
+		UART_push_out_len("dog", 5);
+		vTaskDelay(200);
 	}
 }
 
@@ -55,6 +67,12 @@ void vGeneralTaskInit(void){
 		NULL              ); // pvCreatedTask */
 	xTaskCreate(updateRPM,
 		(const signed char *)"updateRPM",
+		configMINIMAL_STACK_SIZE,
+		NULL,                 // pvParameters
+		tskIDLE_PRIORITY + 1, // uxPriority
+		NULL              ); // pvCreatedTask */
+	xTaskCreate(UART,
+		(const signed char *)"UART",
 		configMINIMAL_STACK_SIZE,
 		NULL,                 // pvParameters
 		tskIDLE_PRIORITY + 1, // uxPriority
@@ -117,7 +135,6 @@ void TIM5_IRQHandler(){
 	if (TIM_GetITStatus(TIM5, TIM_IT_Update) != RESET){
 		TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
 		//GPIOD->ODR ^= GPIO_Pin_15;
-		do_freq_calc = true;
 	}else if (TIM_GetITStatus(TIM5, TIM_IT_CC1) != RESET){
 		TIM_ClearITPendingBit(TIM5, TIM_IT_CC1);
 		GPIOD->ODR ^= GPIO_Pin_14;
