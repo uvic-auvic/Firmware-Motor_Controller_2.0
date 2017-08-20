@@ -130,6 +130,41 @@ extern uint32_t get_rpm(){
 	//need to stop raw data from updating
 	TIM5->DIER &= ~TIM_IT_CC1DE;
 
+	uint8_t idx = (ARRAYSIZE - (DMA1_Stream2->NDTR));
+	uint8_t stop_idx = ((idx + ARRAYSIZE)-1)%ARRAYSIZE;
+	uint32_t diff = 0;
+	uint32_t temp = 0;
+	/*
+	 *	We need to get the current index that is being placed into: (ARRAYSIZE - DMA1_Stream2->NDTR)
+	 *	We go up to <= instead of the typical < because we want to go one less than normal
+	 *
+	 */
+	for(idx = (ARRAYSIZE - DMA1_Stream2->NDTR); idx != stop_idx; idx = ((idx + 1) %  ARRAYSIZE)){
+		if(cc1_data[(idx+1) % ARRAYSIZE] > cc1_data[idx % ARRAYSIZE]){
+			diff = cc1_data[(idx+1) % ARRAYSIZE] - cc1_data[idx % ARRAYSIZE];
+		}else{//if not bigger, must be smaller
+			diff = (_10_MHZ - cc1_data[idx % ARRAYSIZE]) + cc1_data[(idx+1) % ARRAYSIZE];
+		}
+		temp += diff;
+	}
+
+	//make sure to run back on the DMA
+	//reset_freq_data();
+	TIM5->DIER |= TIM_IT_CC1DE;
+
+	uint32_t temp2 = 0;
+
+	temp = temp / 9;
+	temp2 = ( (60*_10_MHZ) / temp);
+
+	return temp2;
+}
+
+/*
+extern uint32_t get_rpm_old(){
+	//need to stop raw data from updating
+	TIM5->DIER &= ~TIM_IT_CC1DE;
+
 	uint8_t k = 0;
 	uint8_t dividor = 0;
 	uint32_t diff = 0;
@@ -160,3 +195,4 @@ extern uint32_t get_rpm(){
 	}
 	return temp2;
 }
+*/
