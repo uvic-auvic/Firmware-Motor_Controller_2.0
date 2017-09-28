@@ -6,6 +6,7 @@
  */
 
 #include "simple_UART.h"
+#include <string.h>
 
 char stringtosend[MAX_OUPUT_DATA] = "";
 
@@ -14,21 +15,21 @@ uint8_t bytes_to_send;
 static void Configure_GPIO_USART1(void)
 {
 	/* Enable the peripheral clock of GPIOA */
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
 
 	/* GPIOA Configuration: TIM5 CH1 (PA0) */
-	GPIO_InitStructure.GPIO_Pin = (GPIO_Pin_9 | GPIO_Pin_10);
+	GPIO_InitStructure.GPIO_Pin = (GPIO_Pin_6 | GPIO_Pin_7);
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; // Input/Output controlled by peripheral
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
 
 	/* Connect USART1 pins to AF */
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_USART1);
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_USART1);
 }
 
 /**
@@ -44,16 +45,13 @@ static void Configure_USART1(void)
 	//RCC->CFGR3 |= RCC_CFGR3_USART1SW_1;
 	USART_InitTypeDef USART_InitStruct; // this is for the USART1 initilization
 
-	USART_InitStruct.USART_BaudRate = 19200;				// the baudrate is set to the value we passed into this init function
+	USART_InitStruct.USART_BaudRate = 9600;				// the baudrate is set to the value we passed into this init function
 	USART_InitStruct.USART_WordLength = USART_WordLength_8b;// we want the data frame size to be 8 bits (standard)
 	USART_InitStruct.USART_StopBits = USART_StopBits_1;		// we want 1 stop bit (standard)
 	USART_InitStruct.USART_Parity = USART_Parity_No;		// we don't want a parity bit (standard)
 	USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None; // we don't want flow control (standard)
 	USART_InitStruct.USART_Mode = USART_Mode_Tx | USART_Mode_Rx; // we want to enable the transmitter and the receiver
 	USART_Init(USART1, &USART_InitStruct);
-
-	GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_USART1); //
-	GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_USART1);
 
 	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
 
@@ -82,4 +80,8 @@ extern void UART_init(){
 	//initialize the UART driver
 	Configure_GPIO_USART1();
 	Configure_USART1();
+}
+
+void USART1_IRQHandler(){
+
 }
