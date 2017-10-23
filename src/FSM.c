@@ -10,16 +10,16 @@
 #include "PWM_in.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "simple_UART.h"
 //#include "temp_sensor.h"
 
 #define CHAR_TO_INT (48)
 
 extern void FSM(void *dummy){
 	//initialize the FSM and UART
-	//FSM_Init();
 	UART_init();
 
-	inputBuffer.size = 0;
+	//inputBuffer.size = 0;
 
 	//temporary storage to return from buffer
 	char commandString[MAX_BUFFER_SIZE] = "";
@@ -29,22 +29,37 @@ extern void FSM(void *dummy){
 		//it's important that this is while, if the task is accidentally awaken it
 		//can't execute without having at least one item the input puffer
 		while(inputBuffer.size == 0){
+
 			//sleeps the task into it is notified to continue
 			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 		}
 		//Write a statement here to do a string comparison on commands
 		Buffer_pop(&inputBuffer, commandString);
+
+		//UART_push_out_len('\0', 1);
+
+
+		UART_push_out("commandString: ");
+		UART_push_out(commandString);
+		UART_push_out("\n");
+
+
 		char argument = commandString[3];
 		commandString[3] = '\0';
 
 		char tempOutputString[MAX_BUFFER_SIZE] = "";
 
-		/*
+
 		// MxF command
 		if(commandString[0] == 'M' && commandString[2] == 'F'){
-			int motor = commandString[1] - CHAR_TO_INT - 1; // zero based
-			Motor_Speed(motor, ((unsigned int)(argument)), Forward);
+
+
+			GPIOD->ODR ^= GPIO_Pin_12;
+
+			//int motor = commandString[1] - CHAR_TO_INT - 1; // zero based
+			//Motor_Speed(motor, ((unsigned int)(argument)), Forward);
 		}
+		/*
 		// MxR command
 		else if(commandString[0] == 'M' && commandString[2] == 'R'){
 			int motor = commandString[1] - CHAR_TO_INT - 1; // zero based
@@ -139,14 +154,14 @@ extern void FSM(void *dummy){
 		//catch all error
 		*/
 
-			UART_push_out("error: ");
-			UART_push_out(commandString);
-			UART_push_out("\r\n");
+
+
+
 	}
 }
 
 void FSM_Init(){
-	Buffer_init(&inputBuffer);
+
 
 	// Create the FSM task
     xTaskCreate(FSM,

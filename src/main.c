@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include "PWM_in.h"
 #include "LEDs.h"
+#include "FSM.h"
 
 //#include "UART.h"
 //#include "FSM.h"
@@ -50,10 +51,10 @@ void updateRPM(void *dummy){
 }
 
 void UART(void *dummy){
-	UART_init();
+	//UART_init();
 
 	while(1){
-		UART_push_out_len("dog", 5);
+		//UART_push_out_len("dog", 5);
 		vTaskDelay(200);
 	}
 }
@@ -83,6 +84,7 @@ int main(void)
 {
 	init_LED();
 	init_pwm_in();
+	FSM_Init();
 
 	vGeneralTaskInit();
 	vTaskStartScheduler();

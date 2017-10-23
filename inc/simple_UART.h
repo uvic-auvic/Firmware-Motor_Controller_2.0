@@ -9,8 +9,11 @@
 #define SIMPLE_UART_H_
 
 #include "stm32f4xx.h"
+#include "Buffer.h"
 
 #define MAX_OUPUT_DATA (10)
+
+Buffer inputBuffer;
 
 extern void UART_init();
 extern void UART_push_out_len(char* mesg, int len);
