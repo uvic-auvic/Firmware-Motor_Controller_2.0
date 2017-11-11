@@ -6,20 +6,22 @@
  */
 
 #include "simple_UART.h"
-//#include "buffer.h"
-//#include "FSM.h"
-//#include "LEDs.h"
+#include "stm32f4xx_dma.h"
 #include "FreeRTOS.h"
 #include "Task.h"
+#include "Buffer.h"
 #include <string.h>
 
-char stringtosend[MAX_OUPUT_DATA] = "";
+// Receive buffer for UART, no DMA
 char UARTInput[MAX_BUFFER_DATA];
 uint8_t UARTInputIndex = 0;
 
-TaskHandle_t UARTTaskToNotify = NULL;
+// Transmit buffer for UART, DMA
+#define DMA_TX_BUFFER_SIZE          16
+uint8_t DMA_TX_Buffer[DMA_TX_BUFFER_SIZE];
 
-//uint8_t bytes_to_send;
+// Task handle to notify FSM task
+TaskHandle_t UARTTaskToNotify = NULL;
 
 static void Configure_GPIO_USART1(void) {
 	/* Enable the peripheral clock of GPIOA */
@@ -50,7 +52,7 @@ static void Configure_USART1(void) {
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
 
 	//RCC->CFGR3 |= RCC_CFGR3_USART1SW_1;
-	USART_InitTypeDef USART_InitStruct; // this is for the USART1 initilization
+	USART_InitTypeDef USART_InitStruct; // this is for the USART1 initialization
 
 	USART_InitStruct.USART_BaudRate = 9600;	// the baudrate is set to the value we passed into this init function
 	USART_InitStruct.USART_WordLength = USART_WordLength_8b;// we want the data frame size to be 8 bits (standard)
@@ -60,10 +62,7 @@ static void Configure_USART1(void) {
 	USART_InitStruct.USART_Mode = USART_Mode_Tx | USART_Mode_Rx; // we want to enable the transmitter and the receiver
 	USART_Init(USART1, &USART_InitStruct);
 
-	//USART_ITConfig(USART1, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
-
 	USART1->CR1 |= 0b100000; //Enable the USART1 receive interrupt
-
 
 	/* Configure IT */
 	/* (3) Set priority for USART1_IRQn */
@@ -75,15 +74,64 @@ static void Configure_USART1(void) {
 	USART_Cmd(USART1, ENABLE);
 }
 
+static void Configure_DMA_USART1() {
+
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
+
+	//Initialize DMA USing DMA2 Stream7 Channel 4
+	DMA2_Stream7->CR = 0;
+
+	DMA2_Stream7->PAR |= (uint32_t) &USART1->DR;
+	DMA2_Stream7->M0AR |= (uint32_t) DMA_TX_Buffer;
+	DMA2_Stream7->NDTR |= DMA_TX_BUFFER_SIZE;
+	DMA2_Stream7->CR |= DMA_Channel_4; //Set Channel 4
+	DMA2_Stream7->CR |= DMA_Priority_Medium; // Set priority to medium
+	DMA2_Stream7->CR |= DMA_DIR_MemoryToPeripheral; //Set direction, memory-to-peripheral
+	DMA2_Stream7->CR |= DMA_MemoryInc_Enable; //Set memory increment mode
+	DMA2_Stream7->CR |= DMA_IT_TC; // //Transfer complete interrupt enable
+
+	// Enable DMA Transmit in the USART control register
+	USART1->CR3 |= USART_DMAReq_Tx;
+
+	NVIC_InitTypeDef NVIC_InitStructure;
+	//Enable DMA2 channel IRQ Channel */
+	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream7_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+}
+
+extern void UART_push_out_DMA(char* mesg) {
+
+	UART_push_out_DMA_len(mesg, strlen(mesg));
+
+}
+
+extern void UART_push_out_DMA_len(char* mesg, uint8_t len) {
+
+	if (len > DMA_TX_BUFFER_SIZE) {
+		while(1);
+	}
+
+	DMA2_Stream7->NDTR = len;
+	memcpy(DMA_TX_Buffer, mesg, len);
+	DMA2_Stream7->CR |= 1;
+
+}
+
 extern void UART_push_out(char* mesg) {
 
-	for (int i = 0; i < strlen(mesg); i++) {
+	 for (int i = 0; i < strlen(mesg); i++) {
 
 		//We need to wait for data register to be empty
 		while (!(USART1->SR & 0x00000040)); //Checks if the TC bit in the USART_SR register is high
 
 		USART1->DR = mesg[i];
 	}
+
 }
 
 extern void UART_push_out_len(char* mesg, int len) {
@@ -108,6 +156,7 @@ extern void UART_init() {
 	//initialize the UART driver
 	Configure_GPIO_USART1();
 	Configure_USART1();
+	Configure_DMA_USART1();
 }
 
 void USART1_IRQHandler() {
@@ -127,4 +176,20 @@ void USART1_IRQHandler() {
 		UARTInput[UARTInputIndex] = tempInput[0];
 		UARTInputIndex = (UARTInputIndex + 1) & 7;
 	}
+}
+
+void DMA2_Stream7_IRQHandler() {
+
+	uint32_t lowInterruptStatusRegister = DMA2->LISR;
+	uint32_t highInterruptStatusRegister = DMA2->HISR;
+	uint32_t lowInterruptFlagClearRegister = DMA2->LIFCR;
+	uint32_t highInterruptFlagClearRegister = DMA2->HIFCR;
+
+	if (DMA2->HISR & 0x8000000) {
+		DMA2->HIFCR |= 0x8000000;
+	}
+	if (DMA2->HISR & 0x4000000) {
+		DMA2->HIFCR |= 0x4000000;
+	}
+
 }
