@@ -8,12 +8,9 @@
 #ifndef SIMPLE_UART_H_
 #define SIMPLE_UART_H_
 
-#include "stm32f4xx.h"
 #include "Buffer.h"
 
-#define MAX_OUPUT_DATA (10)
-
-Buffer inputBuffer;
+Buffer inputBuffer; //command from UART gets stored in this buffer
 
 extern void UART_init();
 extern void UART_push_out_len(char* mesg, int len);
