@@ -93,12 +93,37 @@ extern void UART_init() {
 	Configure_USART1();
 }
 
-extern void UART_push_out(char* mesg) {
+/*
+ * ERROR CODE:
+ * -1 = String length is not 1 or greater
+ * -2 = OutputBuffer will overflow. Wait some time and retry
+ * 1  = Added to buffer successfully
+ */
+extern int UART_push_out(char* mesg) {
 
-	 UART_push_out_len(mesg, strlen(mesg));
+	 return UART_push_out_len(mesg, strlen(mesg));
 }
 
-extern void UART_push_out_len(char* mesg, int len) {
+/*
+ * ERROR CODE:
+ * -1 = String length is not 1 or greater
+ * -2 = OutputBuffer will overflow. Wait some time and retry
+ * 1  = Added to buffer successfully
+ */
+extern int UART_push_out_len(char* mesg, int len) {
+
+	if(len < 1) {
+		return -1;
+	}
+
+	int diff = outputBufferIndexTail - outputBufferIndexHead;
+
+	if(diff <= 0) {
+		diff += OUTPUT_BUFFER_SIZE_BYTES;
+	}
+	if(len > diff) {
+		return -2;
+	}
 
 	for (int i = 0; i < len; i++) {
 		outputBuffer[outputBufferIndexHead] = mesg[i];
@@ -106,8 +131,7 @@ extern void UART_push_out_len(char* mesg, int len) {
 	}
 
 	USART1->CR1 |= USART_TXEIE;
-
-	//TO DO: Return errors when buffer overflows or length is zero
+	return 1;
 
 }
 

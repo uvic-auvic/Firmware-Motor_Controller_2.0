@@ -13,6 +13,7 @@
 Buffer inputBuffer; //command from UART gets stored in this buffer
 
 extern void UART_init();
-extern void UART_push_out_len(char* mesg, int len);
+extern int UART_push_out(char* mesg);
+extern int UART_push_out_len(char* mesg, int len);
 
 #endif /* SIMPLE_UART_H_ */
