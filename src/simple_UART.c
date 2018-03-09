@@ -5,21 +5,29 @@
  *      Author: abates
  */
 
+
 #include "simple_UART.h"
-//#include "buffer.h"
-//#include "FSM.h"
-//#include "LEDs.h"
+#include "stm32f4xx_dma.h"
 #include "FreeRTOS.h"
 #include "Task.h"
+#include "Buffer.h"
 #include <string.h>
 
-char stringtosend[MAX_OUPUT_DATA] = "";
-char UARTInput[MAX_BUFFER_DATA];
-uint8_t UARTInputIndex = 0;
+//Register bit for enabling TXEIE bit. This is used instead of the definitions in stm32f4xx_usart.h
+#define USART_TXEIE	0b10000000
+#define USART_RXEIE	0b100000
 
+// Receive buffer for UART, no DMA
+char inputString[MAX_BUFFER_DATA]; //string to store individual bytes as they are sent
+uint8_t inputStringIndex = 0;
+
+// Transmit buffer for UART, no DMA
+#define OUTPUT_BUFFER_SIZE_BYTES	64
+char outputBuffer[OUTPUT_BUFFER_SIZE_BYTES];
+uint8_t outputBufferIndexHead = 0, outputBufferIndexTail = 0;
+
+// Task handle to notify FSM task
 TaskHandle_t UARTTaskToNotify = NULL;
-
-//uint8_t bytes_to_send;
 
 static void Configure_GPIO_USART1(void) {
 	/* Enable the peripheral clock of GPIOA */
@@ -28,7 +36,7 @@ static void Configure_GPIO_USART1(void) {
 	GPIO_InitTypeDef GPIO_InitStructure;
 
 	/* GPIOA Configuration: TIM5 CH1 (PA0) */
-	GPIO_InitStructure.GPIO_Pin = (GPIO_Pin_6 | GPIO_Pin_7);
+	GPIO_InitStructure.GPIO_Pin |= GPIO_Pin_6 | GPIO_Pin_7;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; // Input/Output controlled by peripheral
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -50,7 +58,7 @@ static void Configure_USART1(void) {
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
 
 	//RCC->CFGR3 |= RCC_CFGR3_USART1SW_1;
-	USART_InitTypeDef USART_InitStruct; // this is for the USART1 initilization
+	USART_InitTypeDef USART_InitStruct; // this is for the USART1 initialization
 
 	USART_InitStruct.USART_BaudRate = 9600;	// the baudrate is set to the value we passed into this init function
 	USART_InitStruct.USART_WordLength = USART_WordLength_8b;// we want the data frame size to be 8 bits (standard)
@@ -60,10 +68,7 @@ static void Configure_USART1(void) {
 	USART_InitStruct.USART_Mode = USART_Mode_Tx | USART_Mode_Rx; // we want to enable the transmitter and the receiver
 	USART_Init(USART1, &USART_InitStruct);
 
-	//USART_ITConfig(USART1, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
-
-	USART1->CR1 |= 0b100000; //Enable the USART1 receive interrupt
-
+	USART1->CR1 |= USART_RXEIE; //Enable the USART1 receive interrupt
 
 	/* Configure IT */
 	/* (3) Set priority for USART1_IRQn */
@@ -73,28 +78,6 @@ static void Configure_USART1(void) {
 
 	// finally this enables the complete USART1 peripheral
 	USART_Cmd(USART1, ENABLE);
-}
-
-extern void UART_push_out(char* mesg) {
-
-	for (int i = 0; i < strlen(mesg); i++) {
-
-		//We need to wait for data register to be empty
-		while (!(USART1->SR & 0x00000040)); //Checks if the TC bit in the USART_SR register is high
-
-		USART1->DR = mesg[i];
-	}
-}
-
-extern void UART_push_out_len(char* mesg, int len) {
-
-	for (int i = 0; i < len; i++) {
-
-		//We need to wait for data register to be empty
-		while (!(USART1->SR & 0x00000040)); //Checks if the TC bit in the USART_SR register is high
-
-		USART1->DR = mesg[i];
-	}
 }
 
 extern void UART_init() {
@@ -110,21 +93,83 @@ extern void UART_init() {
 	Configure_USART1();
 }
 
-void USART1_IRQHandler() {
-	char tempInput[1];
-	tempInput[0] = USART1->DR;
+/*
+ * ERROR CODE:
+ * -1 = String length is not 1 or greater
+ * -2 = OutputBuffer will overflow. Wait some time and retry
+ * 1  = Added to buffer successfully
+ */
+extern int UART_push_out(char* mesg) {
 
-	//Check for new line character which indicates end of command
-	if (tempInput[0] == '\n') {
-		Buffer_add(&inputBuffer, UARTInput, MAX_BUFFER_DATA);
-		memset(UARTInput, 0, 8);
-		UARTInputIndex = 0;
+	 return UART_push_out_len(mesg, strlen(mesg));
+}
 
-		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		vTaskNotifyGiveFromISR(UARTTaskToNotify, &xHigherPriorityTaskWoken);
+/*
+ * ERROR CODE:
+ * -1 = String length is not 1 or greater
+ * -2 = OutputBuffer will overflow. Wait some time and retry
+ * 1  = Added to buffer successfully
+ */
+extern int UART_push_out_len(char* mesg, int len) {
 
-	} else {
-		UARTInput[UARTInputIndex] = tempInput[0];
-		UARTInputIndex = (UARTInputIndex + 1) & 7;
+	if(len < 1) {
+		return -1;
 	}
+
+	int diff = outputBufferIndexTail - outputBufferIndexHead;
+
+	if(diff <= 0) {
+		diff += OUTPUT_BUFFER_SIZE_BYTES;
+	}
+	if(len > diff) {
+		return -2;
+	}
+
+	for (int i = 0; i < len; i++) {
+		outputBuffer[outputBufferIndexHead] = mesg[i];
+		outputBufferIndexHead = (outputBufferIndexHead + 1) & 63;
+	}
+
+	USART1->CR1 |= USART_TXEIE;
+	return 1;
+
+}
+
+// This is handling two cases. The interrupt will run if a character is received
+// and when data is moved out from the transmit buffer and the transmit buffer is empty
+void USART1_IRQHandler() {
+
+	if((USART1->SR & USART_FLAG_RXNE) == USART_FLAG_RXNE) { //If character is received
+
+		char tempInput[1];
+		tempInput[0] = USART1->DR;
+
+		//Check for new line character which indicates end of command
+		if (tempInput[0] == '\n') {
+
+			if(strlen(inputString) > 0) {
+				Buffer_add(&inputBuffer, inputString, MAX_BUFFER_DATA);
+				memset(inputString, 0, 8);
+				inputStringIndex = 0;
+
+				BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+				vTaskNotifyGiveFromISR(UARTTaskToNotify, &xHigherPriorityTaskWoken);
+			}
+
+		} else {
+			inputString[inputStringIndex] = tempInput[0];
+			inputStringIndex = (inputStringIndex + 1) & 7;
+		}
+
+	} else if ((USART1->SR & USART_FLAG_TXE) == USART_FLAG_TXE) { // If Transmission is complete
+
+		if ((outputBufferIndexHead - outputBufferIndexTail) != 0) {
+			USART1->DR = outputBuffer[outputBufferIndexTail];
+			outputBufferIndexTail = (outputBufferIndexTail + 1) & 63;
+		} else {
+			USART1->CR1 &= ~USART_TXEIE;
+		}
+
+	}
+
 }

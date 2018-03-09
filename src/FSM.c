@@ -22,30 +22,30 @@
 #define MS_MOTOR_NUMBER_LOCATION 0x01
 #define MS_MOTOR_NUMBER_LENTGH	1
 #define MS_ARGUMENT_LOCATION	0x03
-#define MS_ARGUMENT_LENGTH	2
-#define MS_COMMAND_LENGTH	5
+#define MS_ARGUMENT_LENGTH		2
+#define MS_COMMAND_LENGTH		5
 
 // Pulse Width Modulation(PW) command
 #define PW_MOTOR_NUMBER_LOCATION	0x02
-#define PW_MOTOR_NUMBER_LENTGH	1
-#define PW_ARGUMENT_LOCATION	0x03
-#define PW_ARGUMENT_LENGTH	2
-#define PW_COMMAND_LENGTH	5
+#define PW_MOTOR_NUMBER_LENTGH		1
+#define PW_ARGUMENT_LOCATION		0x03
+#define PW_ARGUMENT_LENGTH			2
+#define PW_COMMAND_LENGTH			5
 
 // Stop Motor(SM) Command
 #define SM_MOTOR_NUMBER_LOCATION	0x02
-#define SM_MOTOR_NUMBER_LENTGH	1
-#define SM_COMMAND_LENGTH	3
+#define SM_MOTOR_NUMBER_LENTGH		1
+#define SM_COMMAND_LENGTH			3
 
 // Revolutions on motor(RV) Command
 #define RV_MOTOR_NUMBER_LOCATION	0x02
-#define RV_MOTOR_NUMBER_LENTGH	1
-#define RV_COMMAND_LENGTH	3
+#define RV_MOTOR_NUMBER_LENTGH		1
+#define RV_COMMAND_LENGTH			3
 
 // Calibrate Motor(CL) command
 #define CL_MOTOR_NUMBER_LOCATION	0x02
-#define CL_MOTOR_NUMBER_LENTGH	1
-#define CL_COMMAND_LENGTH	3
+#define CL_MOTOR_NUMBER_LENTGH		1
+#define CL_COMMAND_LENGTH			3
 
 // STP command
 #define STP_COMMAND_LENGTH	3
@@ -100,46 +100,37 @@ extern void FSM(void *dummy){
 		Buffer_pop(&inputBuffer, commandString);
 
 		// MxF command
-		if(commandString[0] == 'M' && commandString[2] == 'F')	{
+		if(commandString[0] == 'M' && commandString[2] == 'F' && strlen(commandString) == MS_COMMAND_LENGTH)	{
 
 			int8_t motorNumber = asciiToInt(commandString + MS_MOTOR_NUMBER_LOCATION, MS_MOTOR_NUMBER_LENTGH);
 			int8_t argument = asciiToInt(commandString + MS_ARGUMENT_LOCATION, MS_ARGUMENT_LENGTH);
 
-			if (strlen(commandString) != MS_COMMAND_LENGTH) {
-				// send out error: "Command is incorrect length. Invalid command"
-
-			} else if (motorNumber == -1) {
-				//send out error: "Motor number must be a number"
-
-			} else if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
+				UART_push_out("ERR_MTR_IVD\r\n");
 
 			} else if (argument < 0) {
-
 				// send out error: "Argument must be a number between 00-99"
+				UART_push_out("ERR_ARG_IVD\r\n");
+
 			} else {
 				//Motor_Speed(motorNumber, argument, Forward);
-
 			}
 		}
 
 		// MxR command
-		else if(commandString[0] == 'M' && commandString[2] == 'R'){
+		else if(commandString[0] == 'M' && commandString[2] == 'R' && strlen(commandString) == MS_COMMAND_LENGTH){
 
 			int8_t motorNumber = asciiToInt(commandString + MS_MOTOR_NUMBER_LOCATION, MS_MOTOR_NUMBER_LENTGH);
 			int8_t argument = asciiToInt(commandString + MS_ARGUMENT_LOCATION, MS_ARGUMENT_LENGTH);
 
-			if (strlen(commandString) != MS_COMMAND_LENGTH) {
-				// send out error: "Command is incorrect length. Invalid command"
-
-			} else if (motorNumber == -1) {
-				//send out error: "Motor number must be a number"
-
-			} else if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
+				UART_push_out("ERR_MTR_IVD\r\n");
 
 			} else if (argument < 0) {
 				// send out error: "Argument must be a number between 00-99"
+				UART_push_out("ERR_ARG_IVD\r\n");
 
 			} else {
 				//Motor_Speed(motorNumber, argument, Reverse);
@@ -148,22 +139,18 @@ extern void FSM(void *dummy){
 		}
 
 		// PWx command
-		else if(strncmp(commandString, "PW", 2) == 0){
+		else if(strncmp(commandString, "PW", 2) == 0 && strlen(commandString) == PW_COMMAND_LENGTH){
 
 			int8_t motorNumber = asciiToInt(commandString + PW_MOTOR_NUMBER_LOCATION, PW_MOTOR_NUMBER_LENTGH);
 			int8_t argument = asciiToInt(commandString + PW_ARGUMENT_LOCATION, PW_ARGUMENT_LENGTH);
 
-			if (strlen(commandString) != PW_COMMAND_LENGTH) {
-				// send out error: "Command is incorrect length. Invalid command"
-
-			} else if (motorNumber == -1) {
-				//send out error: "Motor number must be a number"
-
-			} else if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
+				UART_push_out("ERR_MTR_IVD\r\n");
 
 			} else if (argument < 0) {
 				// send out error: "Argument must be a number between 00-99"
+				UART_push_out("ERR_ARG_IVD\r\n");
 
 			} else {
 				//Motor_PWM(motorNumber, (argument)* (10000 / 255));
@@ -172,21 +159,16 @@ extern void FSM(void *dummy){
 		}
 
 		// RVx command
-		else if(strncmp(commandString, "RV", 2) == 0){
+		else if(strncmp(commandString, "RV", 2) == 0 && strlen(commandString) == RV_COMMAND_LENGTH){
 
 			int8_t motorNumber = asciiToInt(commandString + RV_MOTOR_NUMBER_LOCATION, RV_MOTOR_NUMBER_LENTGH);
 
-			if(strlen(commandString) != RV_COMMAND_LENGTH) {
-				// send out error: "Command is incorrect length. Invalid command"
-
-			} else if(commandString[RV_MOTOR_NUMBER_LOCATION] == 'A') {
+			if(commandString[RV_MOTOR_NUMBER_LOCATION] == 'A') {
 				// Send out all motor revolutions
-
-			} else if (motorNumber == -1){
-				// Send out error: "Motor number must be a number or A"
 
 			} else if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
+				UART_push_out("ERR_MTR_IVD\r\n");
 
 			} else {
 				// Send out revolutions for requested motor
@@ -195,18 +177,13 @@ extern void FSM(void *dummy){
 		}
 
 		// CLx command
-		else if (strncmp(commandString, "CL", 2) == 0) {
+		else if (strncmp(commandString, "CL", 2) == 0 && strlen(commandString) == CL_COMMAND_LENGTH) {
 
-			int8_t motorNumber = asciiToInt(commandString + PW_MOTOR_NUMBER_LOCATION, PW_MOTOR_NUMBER_LENTGH);
+			int8_t motorNumber = asciiToInt(commandString + CL_MOTOR_NUMBER_LOCATION, CL_MOTOR_NUMBER_LENTGH);
 
-			if (strlen(commandString) != CL_COMMAND_LENGTH) {
-				// send out error: "Command is incorrect length. Invalid command"
-
-			} else if (motorNumber == -1) {
-				//send out error: "Motor number must be a number"
-
-			} else if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
+				UART_push_out("ERR_MTR_IVD\r\n");
 
 			} else {
 				// Calibrate Motors
@@ -220,18 +197,13 @@ extern void FSM(void *dummy){
 		}
 
 		// SMx command
-		else if(strncmp(commandString, "SM", 2) == 0){
+		else if(strncmp(commandString, "SM", 2) == 0 && strlen(commandString) == SM_COMMAND_LENGTH){
 
-			int8_t motorNumber = asciiToInt(commandString + PW_MOTOR_NUMBER_LOCATION, PW_MOTOR_NUMBER_LENTGH);
+			int8_t motorNumber = asciiToInt(commandString + SM_MOTOR_NUMBER_LOCATION, SM_MOTOR_NUMBER_LENTGH);
 
-			if (strlen(commandString) != SM_COMMAND_LENGTH) {
-				// send out error: "Command is incorrect length. Invalid command"
-
-			} else if (motorNumber == -1) {
-				//send out error: "Motor number must be a number"
-
-			} else if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
+				UART_push_out("ERR_MTR_IVD\r\n");
 
 			} else {
 				// Motor_Speed(motorNumber, 0, Forward);
@@ -244,48 +216,33 @@ extern void FSM(void *dummy){
 		// STP Command
 		else if(strcmp(commandString, "STP") == 0){
 
-			if (strlen(commandString) != STP_COMMAND_LENGTH) {
-				// send out error: "Command is incorrect length. Invalid command"
-
-			} else {
-				// Motors_Stop();
-				while(UART_push_out("ACK\r\n") == -2) {
-					vTaskDelay(1000/1200);
-				}
+			// Motors_Stop();
+			while(UART_push_out("ACK\r\n") == -2) {
+				vTaskDelay(1000/1200);
 			}
 		}
 
 		//RID command
 		else if(strcmp(commandString, "RID") == 0){
 
-			if (strlen(commandString) != RID_COMMAND_LENGTH) {
-				// send out error: "Command is incorrect length. Invalid command"
-
-			} else {
-				while(UART_push_out("Motor Controller\r\n") == -2) {
-					vTaskDelay(1000/1200);
-				}
+			while(UART_push_out("Motor Controller\r\n") == -2) {
+				vTaskDelay(1000/1200);
 			}
 		}
 
 		//TMP command
 		else if(strcmp(commandString, "TMP") == 0){
 
-			if (strlen(commandString) != TMP_COMMAND_LENGTH) {
-				// send out error: "Command is incorrect length. Invalid command"
+			// Get motor temperature
+			// Send out temperature
 
-			} else {
-				// Get motor temperature
-				// Send out temperature
-
-			}
 		}
 
 		// No matches
 		else {
 			// send out error: "Invalid command"
+			UART_push_out("ERR_CMD_IVD\r\n");
 		}
-
 	}
 }
 
