@@ -19,7 +19,7 @@ enum motors{
 	Motor_Temp_ADC8
 };
 
-void enable_outputs();
+void initADC_MUX();
 
 uint8_t get_motor_current(enum motors motor_x);
 
