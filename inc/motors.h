@@ -1,3 +1,6 @@
+#ifndef MOTORS_H-
+#define MOTORS_H_
+
 enum motors{
 //current
 	Motor_Curr_ADC1,
@@ -19,8 +22,8 @@ enum motors{
 	Motor_Temp_ADC8
 };
 
-void initADC_MUX();
-
 uint8_t get_motor_current(enum motors motor_x);
 
 uint8_t get_motor_temp(enum motors motor_x);
+
+#endif

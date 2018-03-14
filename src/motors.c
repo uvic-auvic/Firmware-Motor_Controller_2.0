@@ -2,26 +2,26 @@
 #include "stm32f4xx.h"
 #include "motors.h"
 
-void initADC_MUX(){
+static void initTempCurrMUX(){
 	//Enable clock
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 	//GPIOC Configuration
-	 GPIO_InitTypeDef GPIOC_InitStruct;
-	  GPIOC_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
-	  GPIOC_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
-	  GPIOC_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	  GPIOC_InitStruct.GPIO_OType = GPIO_OType_PP;
-	  GPIOC_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
-	  GPIO_Init(GPIOC, &GPIOC_InitStruct);
-	 //GPIOD Configuration
-	  GPIO_InitTypeDef GPIOD_InitStruct;
-	   GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;;
-	   GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
-	   GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	   GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
-	   GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
-	   GPIO_Init(GPIOD, &GPIOD_InitStruct);
+	GPIO_InitTypeDef GPIOC_InitStruct;
+	GPIOC_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
+	GPIOC_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOC_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIOC_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIOC_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOC, &GPIOC_InitStruct);
+	//GPIOD Configuration
+	GPIO_InitTypeDef GPIOD_InitStruct;
+	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;;
+	GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOD, &GPIOD_InitStruct);
 }
 
 uint8_t get_motor_current(enum motors motor_x){
