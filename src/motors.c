@@ -2,7 +2,7 @@
 #include "stm32f4xx.h"
 #include "motors.h"
 
-static void initTempCurrMUX(){
+static void initMotorCurrentTempMUX(){
 	//Enable clock
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
