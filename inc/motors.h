@@ -1,7 +1,23 @@
 #ifndef MOTORS_H_
 #define MOTORS_H_
 
-enum motors{
+typedef enum motors {
+	Motor1 = 1,
+	Motor2,
+	Motor3,
+	Motor4,
+	Motor5,
+	Motor6,
+	Motor7,
+	Motor8
+} motors_t;
+
+typedef enum direction {
+	Forward = 'F',
+	Reverse = 'R'
+} direction_t;
+
+typedef enum motor_sensors {
 //current
 	Motor_Curr_ADC1,
 	Motor_Curr_ADC2,
@@ -20,10 +36,16 @@ enum motors{
 	Motor_Temp_ADC6,
 	Motor_Temp_ADC7,
 	Motor_Temp_ADC8
-};
+} motor_sensors_t;
 
-uint8_t get_motor_current(enum motors motor_x);
+extern void init_motors();
 
-uint8_t get_motor_temp(enum motors motor_x);
+extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t dir);
+
+extern int16_t motor_get_rpm(motors_t motor_x);
+
+extern uint8_t get_motor_current(motor_sensors_t motor_sensor_x);
+
+extern uint8_t get_motor_temp(motor_sensors_t motor_sensor_x);
 
 #endif

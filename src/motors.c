@@ -2,7 +2,10 @@
 #include "stm32f4xx.h"
 #include "motors.h"
 
-static void initMotorCurrentTempMUX(){
+/* Initialization functions
+ * ----------------------------------------------------------
+ */
+static void init_motor_current_temp_MUX(){
 	//Enable clock
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
@@ -24,8 +27,58 @@ static void initMotorCurrentTempMUX(){
 	GPIO_Init(GPIOD, &GPIOD_InitStruct);
 }
 
-uint8_t get_motor_current(enum motors motor_x){
-	switch (motor_x){
+static void init_motor_speed_control()
+{
+
+}
+
+static void init_motor_speed_feedback()
+{
+
+}
+
+/* Extern declarations in each section must go below static declarations */
+extern void init_motors()
+{
+	/* Initialize sub-modules */
+	init_motor_current_temp_MUX();
+	init_motor_speed_control();
+	init_motor_speed_feedback();
+}
+
+/* Robert's section.
+ * Setting motor speed.
+ * ----------------------------------------------------------
+ */
+
+/* Put any static/hidden functions your code may need below here: */
+
+/* Robert's extern/visible functions go below here: */
+extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t dir)
+{
+
+}
+
+/* Poorna's section.
+ * Reading RPM.
+ * ----------------------------------------------------------
+ */
+
+/* Put any static/hidden functions your code may need below here: */
+
+/* Poorna's extern/visible functions go below here: */
+extern int16_t motor_get_rpm(motors_t motor_x)
+{
+	return 0;
+}
+
+/* Code from Issue #8 (by Robert Keen).
+ * Reading MUX'ed sensor data.
+ * ----------------------------------------------------------
+ */
+
+extern uint8_t get_motor_current(motor_sensors_t motor_sensor_x){
+	switch (motor_sensor_x){
 	case Motor_Curr_ADC1:
 			GPIOC-> BSRRL &= ~(GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9);//turn off PC7-PC9
 			return 0;
@@ -59,12 +112,13 @@ uint8_t get_motor_current(enum motors motor_x){
 			return 0;
 			break;
 		default:
+			return 0;
 			break;
 		}
 }
 
-uint8_t get_motor_temp(enum motors motor_x){
-	switch (motor_x){
+extern uint8_t get_motor_temp(motor_sensors_t motor_sensor_x){
+	switch (motor_sensor_x){
 	case Motor_Temp_ADC1:
 			GPIOD-> BSRRL &= ~(GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9);//turn off PD7-PD9
 			return 0;
@@ -98,6 +152,7 @@ uint8_t get_motor_temp(enum motors motor_x){
 			return 0;
 			break;
 		default:
+			return 0;
 			break;
 	}
 }
