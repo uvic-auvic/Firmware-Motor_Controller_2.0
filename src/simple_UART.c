@@ -7,7 +7,7 @@
 
 
 #include "simple_UART.h"
-#include "stm32f4xx_dma.h"
+#include "stm32f4xx.h"
 #include "FreeRTOS.h"
 #include "Task.h"
 #include "Buffer.h"
@@ -121,7 +121,7 @@ extern int UART_push_out_len(char* mesg, int len) {
 	if(diff <= 0) {
 		diff += OUTPUT_BUFFER_SIZE_BYTES;
 	}
-	if(len > diff) {
+	if(len > (diff - 1)) { //Has to be diff - 1. Cannot write to position pointed to by outputBufferIndexTail.
 		return -2;
 	}
 

@@ -6,12 +6,10 @@
  */
 #include "FSM.h"
 #include "Buffer.h"
-//#include "motors.h"
 #include "PWM_in.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "simple_UART.h"
-//#include "temp_sensor.h"
 
 #define NUMBER_OF_MOTORS	8
 
@@ -107,11 +105,11 @@ extern void FSM(void *dummy){
 
 			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
-				UART_push_out("ERR_MTR_IVD\r\n");
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else if (argument < 0) {
 				// send out error: "Argument must be a number between 00-99"
-				UART_push_out("ERR_ARG_IVD\r\n");
+				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
 				//Motor_Speed(motorNumber, argument, Forward);
@@ -126,11 +124,11 @@ extern void FSM(void *dummy){
 
 			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
-				UART_push_out("ERR_MTR_IVD\r\n");
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else if (argument < 0) {
 				// send out error: "Argument must be a number between 00-99"
-				UART_push_out("ERR_ARG_IVD\r\n");
+				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
 				//Motor_Speed(motorNumber, argument, Reverse);
@@ -146,11 +144,11 @@ extern void FSM(void *dummy){
 
 			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
-				UART_push_out("ERR_MTR_IVD\r\n");
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else if (argument < 0) {
 				// send out error: "Argument must be a number between 00-99"
-				UART_push_out("ERR_ARG_IVD\r\n");
+				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
 				//Motor_PWM(motorNumber, (argument)* (10000 / 255));
@@ -168,7 +166,7 @@ extern void FSM(void *dummy){
 
 			} else if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
-				UART_push_out("ERR_MTR_IVD\r\n");
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else {
 				// Send out revolutions for requested motor
@@ -183,14 +181,12 @@ extern void FSM(void *dummy){
 
 			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
-				UART_push_out("ERR_MTR_IVD\r\n");
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else {
 				// Calibrate Motors
 				// if (motor are calibrated successfully) {
-				//		while(UART_push_out("GOOD\r\n") == -2) {
-				//      	vTaskDelay(1000/1200);
-				//      }
+				//		while(UART_push_out("GOOD\r\n") == -2);
 				// }
 
 			}
@@ -203,13 +199,11 @@ extern void FSM(void *dummy){
 
 			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
-				UART_push_out("ERR_MTR_IVD\r\n");
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else {
 				// Motor_Speed(motorNumber, 0, Forward);
-				while(UART_push_out("ACK\r\n") == -2) {
-					vTaskDelay(1000/1200);
-				}
+				while(UART_push_out("ACK\r\n") == -2);
 			}
 		}
 
@@ -217,17 +211,14 @@ extern void FSM(void *dummy){
 		else if(strcmp(commandString, "STP") == 0){
 
 			// Motors_Stop();
-			while(UART_push_out("ACK\r\n") == -2) {
-				vTaskDelay(1000/1200);
-			}
+			while(UART_push_out("ACK\r\n") == -2);
 		}
 
 		//RID command
 		else if(strcmp(commandString, "RID") == 0){
 
-			while(UART_push_out("Motor Controller\r\n") == -2) {
-				vTaskDelay(1000/1200);
-			}
+			while(UART_push_out("Motor Controller\r\n") == -2);
+
 		}
 
 		//TMP command
@@ -241,7 +232,7 @@ extern void FSM(void *dummy){
 		// No matches
 		else {
 			// send out error: "Invalid command"
-			UART_push_out("ERR_CMD_IVD\r\n");
+			while(UART_push_out("ERR_CMD_IVD\r\n") == -2);
 		}
 	}
 }
