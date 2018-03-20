@@ -26,6 +26,10 @@ uint8_t inputStringIndex = 0;
 char outputBuffer[OUTPUT_BUFFER_SIZE_BYTES];
 uint8_t outputBufferIndexHead = 0, outputBufferIndexTail = 0;
 
+// Transmit buffer for UART, DMA
+#define DMA_TX_BUFFER_SIZE          16
+uint8_t DMA_TX_Buffer[DMA_TX_BUFFER_SIZE];
+
 // Task handle to notify FSM task
 TaskHandle_t UARTTaskToNotify = NULL;
 
@@ -80,6 +84,54 @@ static void Configure_USART1(void) {
 	USART_Cmd(USART1, ENABLE);
 }
 
+static void Configure_DMA_USART1() {
+
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
+
+	//Initialize DMA USing DMA2 Stream7 Channel 4
+	DMA2_Stream7->CR = 0;
+
+	DMA2_Stream7->PAR |= (uint32_t) &USART1->DR;
+	DMA2_Stream7->M0AR |= (uint32_t) DMA_TX_Buffer;
+	DMA2_Stream7->NDTR |= DMA_TX_BUFFER_SIZE;
+	DMA2_Stream7->CR |= DMA_Channel_4; //Set Channel 4
+	DMA2_Stream7->CR |= DMA_Priority_Medium; // Set priority to medium
+	DMA2_Stream7->CR |= DMA_DIR_MemoryToPeripheral; //Set direction, memory-to-peripheral
+	DMA2_Stream7->CR |= DMA_MemoryInc_Enable; //Set memory increment mode
+	DMA2_Stream7->CR |= DMA_IT_TC; // //Transfer complete interrupt enable
+
+	// Enable DMA Transmit in the USART control register
+	USART1->CR3 |= USART_DMAReq_Tx;
+
+	NVIC_InitTypeDef NVIC_InitStructure;
+	//Enable DMA2 channel IRQ Channel */
+	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream7_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+}
+
+extern void UART_push_out_DMA(char* mesg) {
+
+	UART_push_out_DMA_len(mesg, strlen(mesg));
+
+}
+
+extern void UART_push_out_DMA_len(char* mesg, uint8_t len) {
+
+	if (len > DMA_TX_BUFFER_SIZE) {
+		while(1);
+	}
+
+	DMA2_Stream7->NDTR = len;
+	memcpy(DMA_TX_Buffer, mesg, len);
+	DMA2_Stream7->CR |= 1;
+
+}
+
 extern void UART_init() {
 
 	//initialize the input buffer
@@ -91,52 +143,12 @@ extern void UART_init() {
 	//initialize the UART driver
 	Configure_GPIO_USART1();
 	Configure_USART1();
+	Configure_DMA_USART1();
 }
 
-/*
- * ERROR CODE:
- * -1 = String length is not 1 or greater
- * -2 = OutputBuffer will overflow. Wait some time and retry
- * 1  = Added to buffer successfully
- */
-extern int UART_push_out(char* mesg) {
-
-	 return UART_push_out_len(mesg, strlen(mesg));
-}
-
-/*
- * ERROR CODE:
- * -1 = String length is not 1 or greater
- * -2 = OutputBuffer will overflow. Wait some time and retry
- * 1  = Added to buffer successfully
- */
-extern int UART_push_out_len(char* mesg, int len) {
-
-	if(len < 1) {
-		return -1;
-	}
-
-	int diff = outputBufferIndexTail - outputBufferIndexHead;
-
-	if(diff <= 0) {
-		diff += OUTPUT_BUFFER_SIZE_BYTES;
-	}
-	if(len > diff) {
-		return -2;
-	}
-
-	for (int i = 0; i < len; i++) {
-		outputBuffer[outputBufferIndexHead] = mesg[i];
-		outputBufferIndexHead = (outputBufferIndexHead + 1) & 63;
-	}
-
-	USART1->CR1 |= USART_TXEIE;
-	return 1;
-
-}
 
 // This is handling two cases. The interrupt will run if a character is received
-// and when data is moved out from the transmit buffer and the transmit buffer is empty
+// and when a transmission is completed
 void USART1_IRQHandler() {
 
 	if((USART1->SR & USART_FLAG_RXNE) == USART_FLAG_RXNE) { //If character is received
@@ -145,7 +157,6 @@ void USART1_IRQHandler() {
 		tempInput[0] = USART1->DR;
 
 		//Check for new line character which indicates end of command
-		//This doesn't take into account some commands where the argument will equal the new line character
 		if (tempInput[0] == '\n') {
 			Buffer_add(&inputBuffer, inputString, MAX_BUFFER_DATA);
 			memset(inputString, 0, 8);
@@ -159,15 +170,22 @@ void USART1_IRQHandler() {
 			inputStringIndex = (inputStringIndex + 1) & 7;
 		}
 
-	} else if ((USART1->SR & USART_FLAG_TXE) == USART_FLAG_TXE) { // If Transmission is complete
+	}
 
-		if ((outputBufferIndexHead - outputBufferIndexTail) != 0) {
-			USART1->DR = outputBuffer[outputBufferIndexTail];
-			outputBufferIndexTail = (outputBufferIndexTail + 1) & 63;
-		} else {
-			USART1->CR1 &= ~USART_TXEIE;
-		}
+}
 
+void DMA2_Stream7_IRQHandler() {
+
+	uint32_t lowInterruptStatusRegister = DMA2->LISR;
+	uint32_t highInterruptStatusRegister = DMA2->HISR;
+	uint32_t lowInterruptFlagClearRegister = DMA2->LIFCR;
+	uint32_t highInterruptFlagClearRegister = DMA2->HIFCR;
+
+	if (DMA2->HISR & 0x8000000) {
+		DMA2->HIFCR |= 0x8000000;
+	}
+	if (DMA2->HISR & 0x4000000) {
+		DMA2->HIFCR |= 0x4000000;
 	}
 
 }
