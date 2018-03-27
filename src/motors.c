@@ -150,6 +150,7 @@ extern void init_motors()
 /* Robert's extern/visible functions go below here: */
 extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t dir)
 {
+	if(dir == Reverse) speed *= -1;
 	switch(motor_x){
 		case Motor1:
 			TIM_SetCompare2(TIM2, speed*10);
