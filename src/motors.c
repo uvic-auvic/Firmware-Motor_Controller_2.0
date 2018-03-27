@@ -19,7 +19,7 @@ static void init_motor_current_temp_MUX(){
 	GPIO_Init(GPIOC, &GPIOC_InitStruct);
 	//GPIOD Configuration
 	GPIO_InitTypeDef GPIOD_InitStruct;
-	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;;
+	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
 	GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
 	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
@@ -29,7 +29,101 @@ static void init_motor_current_temp_MUX(){
 
 static void init_motor_speed_control()
 {
+	//Enable clock
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+	//init timers
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+	//GPIOA Configuration for motors 1-4 and 7
+	GPIO_InitTypeDef GPIOA_InitStruct;
+	GPIOA_InitStruct.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_3 | GPIO_Pin_10 | GPIO_Pin_8 | GPIO_Pin_6;
+	GPIOA_InitStruct.GPIO_Mode = GPIO_Mode_AF;
+	GPIOA_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIOA_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIOA_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOA, &GPIOA_InitStruct);
+	//GPIOD configuration for motors 5-6
+	GPIO_InitTypeDef GPIOD_InitStruct;
+	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_14 | GPIO_Pin_12;
+	GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_AF;
+	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOD, &GPIOD_InitStruct);
+	//GPIOB configuration for motor 8
+	GPIO_InitTypeDef GPIOB_InitStruct;
+	GPIOB_InitStruct.GPIO_Pin = GPIO_Pin_0;
+	GPIOB_InitStruct.GPIO_Mode = GPIO_Mode_AF;
+	GPIOB_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIOB_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIOB_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOB, &GPIOB_InitStruct);
+	//pin alternate function timer configuration
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource1, GPIO_AF_TIM2);
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_TIM2);
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_TIM1);
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource8, GPIO_AF_TIM1);
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource14, GPIO_AF_TIM4);
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource12, GPIO_AF_TIM4);
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource6, GPIO_AF_TIM3);
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource0, GPIO_AF_TIM3);
+	//timer set up
+	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+	TIM_TimeBaseStructure.TIM_Period = 1000 - 1;
+	TIM_TimeBaseStructure.TIM_Prescaler = ((SystemCoreClock / 2) / 21000000) - 1;
+	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
+	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+	//pwm init
+	TIM_OCInitTypeDef TIM_OCInitStructure;
+    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = 0;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+    //pwm config for channel 2 PA1 motor 1
+    TIM_OC2Init(TIM2, &TIM_OCInitStructure);
+    TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable);
+    //pwm config for channel 4 PA3 motor 2
+    TIM_OC4Init(TIM2, &TIM_OCInitStructure);
+    TIM_OC4PreloadConfig(TIM2, TIM_OCPreload_Enable);
+    //pwm config for channel 3 PA10 motor 3
+    TIM_OC3Init(TIM1, &TIM_OCInitStructure);
+    TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
+    //pwm config for channel 1 PA8 motor 4
+    TIM_OC1Init(TIM1, &TIM_OCInitStructure);
+    TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
+    //pwm config for channel 3 PD14 motor 5
+    TIM_OC3Init(TIM4, &TIM_OCInitStructure);
+    TIM_OC3PreloadConfig(TIM4, TIM_OCPreload_Enable);
+    //pwm config for channel 1 PD12 motor 6
+    TIM_OC1Init(TIM4, &TIM_OCInitStructure);
+    TIM_OC1PreloadConfig(TIM4, TIM_OCPreload_Enable);
+    //pwm config for channel 1 PA6 motor 7
+    TIM_OC1Init(TIM3, &TIM_OCInitStructure);
+    TIM_OC1PreloadConfig(TIM3, TIM_OCPreload_Enable);
+    //pwm config for channel 3 PB0 motor 8
+    TIM_OC3Init(TIM3, &TIM_OCInitStructure);
+    TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Enable);
 
+	//additional code for TIM1
+	TIM_BDTRInitTypeDef TIM_BDTRInitStruct;
+	TIM_BDTRStructInit(&TIM_BDTRInitStruct);
+	TIM_BDTRConfig(TIM1, &TIM_BDTRInitStruct);
+	TIM_CCPreloadControl(TIM1, ENABLE);
+	TIM_CtrlPWMOutputs(TIM1, ENABLE);
+
+    TIM_Cmd(TIM2, ENABLE);
+    TIM_Cmd(TIM1, ENABLE);
+    TIM_Cmd(TIM4, ENABLE);
+    TIM_Cmd(TIM3, ENABLE);
 }
 
 static void init_motor_speed_feedback()
@@ -56,6 +150,32 @@ extern void init_motors()
 /* Robert's extern/visible functions go below here: */
 extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t dir)
 {
+	switch(motor_x){
+		case Motor1:
+			TIM_SetCompare2(TIM2, speed*10);
+			break;
+		case Motor2:
+			TIM_SetCompare4(TIM2, speed*10);
+			break;
+		case Motor3:
+			TIM_SetCompare3(TIM1, speed*10);
+			break;
+		case Motor4:
+			TIM_SetCompare1(TIM1, speed*10);
+			break;
+		case Motor5:
+			TIM_SetCompare3(TIM4, speed*10);
+			break;
+		case Motor6:
+			TIM_SetCompare1(TIM4, speed*10);
+			break;
+		case Motor7:
+			TIM_SetCompare1(TIM3, speed*10);
+			break;
+		case Motor8:
+			TIM_SetCompare3(TIM3, speed*10);
+			break;
+	}
 
 }
 
