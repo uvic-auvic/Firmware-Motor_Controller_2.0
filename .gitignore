@@ -36,6 +36,7 @@
 # Auto Generated Files
 *.cfg
 STM32F411VET6.xml
+LinkerScript.ld
 
 # =========================
 # Operating System Files
