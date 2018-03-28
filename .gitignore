@@ -33,6 +33,10 @@
 # Debug files
 *.dSYM/
 
+# Auto Generated Files
+*.cfg
+STM32F411VET6.xml
+
 # =========================
 # Operating System Files
 # =========================
