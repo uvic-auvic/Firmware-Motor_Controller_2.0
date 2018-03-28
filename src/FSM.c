@@ -55,6 +55,10 @@
 #define TMP_COMMAND_LENGTH	3
 
 
+/* Global Variables */
+//UART input commands buffer.
+extern Buffer_t inputBuffer;
+
 /** Converts ASCII to Integer for positive numbers and zero
  * Returns:
  * 	ASCII number as an Integer (0 - 99), or

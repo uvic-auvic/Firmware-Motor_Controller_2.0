@@ -5,7 +5,6 @@
  *      Author: abates
  */
 
-
 #include "simple_UART.h"
 #include "stm32f4xx.h"
 #include "FreeRTOS.h"
@@ -20,6 +19,7 @@
 // Receive buffer for UART, no DMA
 char inputString[MAX_BUFFER_DATA]; //string to store individual bytes as they are sent
 uint8_t inputStringIndex = 0;
+Buffer_t inputBuffer; // Buffer to store whole commands. FSM task will pop the commands of out this buffer
 
 // Transmit buffer for UART, no DMA
 #define OUTPUT_BUFFER_SIZE_BYTES	64
