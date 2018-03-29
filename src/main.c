@@ -8,54 +8,20 @@
   ******************************************************************************
 */
 
-
 #include "stm32f4xx.h"
-#include "stm32f4xx_rcc.h"
-#include "stm32f4xx_tim.h"
-#include "stm32f4xx_gpio.h"
 #include "misc.h"
-#include <stdbool.h>
-#include "PWM_in.h"
 #include "LEDs.h"
 #include "FSM.h"
-
-//#include "UART.h"
-//#include "FSM.h"
-//#include "Buffer.h"
-#include "simple_UART.h"
-
 #include "FreeRTOSConfig.h"
-
 #include "FreeRTOS.h"
 #include "task.h"
 
-#define TESTING_SAMPLES		(2000)
-uint32_t all_freqs[TESTING_SAMPLES];
-
 void blinkyTask(void *dummy){
+
+	GPIOA->ODR |= GPIO_Pin_4;
 	while(1){
-		GPIOD->ODR ^= GPIO_Pin_15;
-		/* maintain LED C9 status for 200ms */
+		GPIOA->ODR ^= GPIO_Pin_4 | GPIO_Pin_5;
 		vTaskDelay(500);
-	}
-}
-
-void updateRPM(void *dummy){
-	uint32_t d = 0;
-
-	while(1){
-		d = ((d+1) % TESTING_SAMPLES);
-		all_freqs[d] = get_rpm();
-		vTaskDelay(500);
-	}
-}
-
-void UART(void *dummy){
-	//UART_init();
-
-	while(1){
-		//UART_push_out_len("dog", 5);
-		vTaskDelay(200);
 	}
 }
 
@@ -66,24 +32,12 @@ void vGeneralTaskInit(void){
 		NULL,                 // pvParameters
 		tskIDLE_PRIORITY + 1, // uxPriority
 		NULL              ); // pvCreatedTask */
-	xTaskCreate(updateRPM,
-		(const signed char *)"updateRPM",
-		configMINIMAL_STACK_SIZE,
-		NULL,                 // pvParameters
-		tskIDLE_PRIORITY + 1, // uxPriority
-		NULL              ); // pvCreatedTask */
-	xTaskCreate(UART,
-		(const signed char *)"UART",
-		configMINIMAL_STACK_SIZE,
-		NULL,                 // pvParameters
-		tskIDLE_PRIORITY + 1, // uxPriority
-		NULL              ); // pvCreatedTask */
 }
 
 int main(void)
 {
+
 	init_LED();
-	init_pwm_in();
 	FSM_Init();
 
 	vGeneralTaskInit();
@@ -131,18 +85,4 @@ void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char *pcTaskName) 
      function is called if a stack overflow is detected. */
   taskDISABLE_INTERRUPTS();
   for(;;);
-}
-
-void TIM5_IRQHandler(){
-	if (TIM_GetITStatus(TIM5, TIM_IT_Update) != RESET){
-		TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
-		//GPIOD->ODR ^= GPIO_Pin_15;
-	}else if (TIM_GetITStatus(TIM5, TIM_IT_CC1) != RESET){
-		TIM_ClearITPendingBit(TIM5, TIM_IT_CC1);
-		GPIOD->ODR ^= GPIO_Pin_14;
-	}
-}
-
-void DMA1_Stream2_IRQHandler(){
-
 }
