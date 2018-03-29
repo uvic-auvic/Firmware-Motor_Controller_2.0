@@ -42,7 +42,7 @@ static void init_motor_current_temp_MUX() {
 	//GPIOD Configuration
 	GPIO_InitTypeDef GPIOD_InitStruct;
 	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
-	;
+
 	GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
 	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
@@ -57,8 +57,7 @@ static void init_motor_speed_control() {
 static void init_PWM_in_timer() {
 
 	// Enable peripheral clock for TIM1, TIM3, TIM4, TIM5
-	RCC->APB1ENR |= RCC_APB1Periph_TIM3 | RCC_APB1Periph_TIM4
-			| RCC_APB1Periph_TIM5;
+	RCC->APB1ENR |= RCC_APB1Periph_TIM3 | RCC_APB1Periph_TIM4 | RCC_APB1Periph_TIM5;
 	RCC->APB2ENR |= RCC_APB2Periph_TIM1;
 
 	/* Time base configuration */
@@ -118,9 +117,7 @@ static void init_PWM_in_timer() {
 static void init_PWM_in_GPIO() {
 
 	// GPIOA clock enable
-	RCC_AHB1PeriphClockCmd(
-			RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_GPIOB,
-			ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_GPIOB, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -204,57 +201,49 @@ static void init_PWM_in_DMA() {
 
 	// DMA Configuration: Motor 1, PA1, TIM5_CH2, DMA1 Stream4 Channel6
 	DMA_InitStructure.DMA_Channel = DMA_Channel_6;
-	DMA_InitStructure.DMA_Memory0BaseAddr =
-			(uint32_t) pwmInTimestamp[Motor1 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) pwmInTimestamp[Motor1 - 1];
 	DMA_Init(DMA1_Stream4, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream4, ENABLE); //Enable the DMA1 - Stream 4
 
 	// DMA Configuration: Motor 2, PA2, TIM5_CH3, DMA1 Stream0 Channel6
 	DMA_InitStructure.DMA_Channel = DMA_Channel_6;
-	DMA_InitStructure.DMA_Memory0BaseAddr =
-			(uint32_t) pwmInTimestamp[Motor2 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor2 - 1];
 	DMA_Init(DMA1_Stream0, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream0, ENABLE); //Enable the DMA1 - Stream 0
 
 	// DMA Configuration: Motor 3, PA11, TIM1_CH4, DMA2 Stream4 Channel6
 	DMA_InitStructure.DMA_Channel = DMA_Channel_6;
-	DMA_InitStructure.DMA_Memory0BaseAddr =
-			(uint32_t) pwmInTimestamp[Motor3 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor3 - 1];
 	DMA_Init(DMA2_Stream4, &DMA_InitStructure);
 	DMA_Cmd(DMA2_Stream4, ENABLE); //Enable the DMA2 - Stream 4
 
 	// DMA Configuration: Motor 4, PA9, TIM1_CH2, DMA2 Stream2 Channel6
 	DMA_InitStructure.DMA_Channel = DMA_Channel_6;
-	DMA_InitStructure.DMA_Memory0BaseAddr =
-			(uint32_t) pwmInTimestamp[Motor4 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor4 - 1];
 	DMA_Init(DMA2_Stream2, &DMA_InitStructure);
 	DMA_Cmd(DMA2_Stream2, ENABLE); //Enable the DMA2 - Stream 2
 
 	// DMA Configuration: Motor 5, PD14, TIM4_CH3, DMA1 Stream7 Channel2
 	DMA_InitStructure.DMA_Channel = DMA_Channel_2;
-	DMA_InitStructure.DMA_Memory0BaseAddr =
-			(uint32_t) pwmInTimestamp[Motor5 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor5 - 1];
 	DMA_Init(DMA1_Stream7, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream7, ENABLE); //Enable the DMA1 - Stream 7
 
 	// DMA Configuration: Motor 6, PD13, TIM4_CH2, DMA1 Stream3 Channel2
 	DMA_InitStructure.DMA_Channel = DMA_Channel_2;
-	DMA_InitStructure.DMA_Memory0BaseAddr =
-			(uint32_t) pwmInTimestamp[Motor6 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor6 - 1];
 	DMA_Init(DMA1_Stream3, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream3, ENABLE); //Enable the DMA1 - Stream 3
 
 	// DMA Configuration: Motor 7, PA7, TIM3_CH2, DMA1 Stream5 Channel5
 	DMA_InitStructure.DMA_Channel = DMA_Channel_5;
-	DMA_InitStructure.DMA_Memory0BaseAddr =
-			(uint32_t) pwmInTimestamp[Motor7 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor7 - 1];
 	DMA_Init(DMA1_Stream5, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream5, ENABLE); //Enable the DMA1 - Stream 5
 
 	// DMA Configuration: Motor 8, PB1, TIM3_CH4, DMA1 Stream2 Channel5
 	DMA_InitStructure.DMA_Channel = DMA_Channel_5;
-	DMA_InitStructure.DMA_Memory0BaseAddr =
-			(uint32_t) pwmInTimestamp[Motor8 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor8 - 1];
 	DMA_Init(DMA1_Stream2, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream2, ENABLE); //Enable the DMA1 - Stream 2
 
@@ -325,17 +314,22 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 	 * Motor 8 - TIM3 CH4
 	 */
 	static uint16_t *motorToTIM_DIER[NUMBER_OF_MOTORS] = { &TIM5->DIER,
-			&TIM5->DIER, &TIM1->DIER, &TIM1->DIER, &TIM4->DIER, &TIM4->DIER,
-			&TIM3->DIER, &TIM3->DIER };
+														   &TIM5->DIER,
+														   &TIM1->DIER,
+														   &TIM1->DIER,
+														   &TIM4->DIER,
+														   &TIM4->DIER,
+														   &TIM3->DIER,
+														   &TIM3->DIER };
 
 	static uint16_t motorToTIM_CCxDE[NUMBER_OF_MOTORS] = { TIM_IT_CC2DE,
-	TIM_IT_CC3DE,
-	TIM_IT_CC4DE,
-	TIM_IT_CC2DE,
-	TIM_IT_CC3DE,
-	TIM_IT_CC2DE,
-	TIM_IT_CC2DE,
-	TIM_IT_CC4DE };
+														   TIM_IT_CC3DE,
+														   TIM_IT_CC4DE,
+														   TIM_IT_CC2DE,
+														   TIM_IT_CC3DE,
+														   TIM_IT_CC2DE,
+														   TIM_IT_CC2DE,
+														   TIM_IT_CC4DE };
 
 	/*
 	 * Below is the motor to DMA mapping for RPM
@@ -349,9 +343,13 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 	 * Motor 8 - DMA1 Stream2 CH5
 	 */
 	static uint32_t *motorToDMA_NTDR[NUMBER_OF_MOTORS] = { &DMA1_Stream4->NDTR,
-			&DMA1_Stream0->NDTR, &DMA2_Stream4->NDTR, &DMA2_Stream2->NDTR,
-			&DMA1_Stream7->NDTR, &DMA1_Stream3->NDTR, &DMA1_Stream5->NDTR,
-			&DMA1_Stream2->NDTR };
+														   &DMA1_Stream0->NDTR,
+														   &DMA2_Stream4->NDTR,
+														   &DMA2_Stream2->NDTR,
+														   &DMA1_Stream7->NDTR,
+														   &DMA1_Stream3->NDTR,
+														   &DMA1_Stream5->NDTR,
+														   &DMA1_Stream2->NDTR };
 
 	//need to stop raw data from updating
 	*motorToTIM_DIER[motor_x - 1] &= ~motorToTIM_CCxDE[motor_x - 1];
@@ -364,15 +362,11 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 	for (; idx != stop_idx; idx = ((idx + 1) % PWM_IN_ARRAY_LENGTH)) {
 		uint32_t diff = 0; // Temporarily store the difference between two timestamps
 
-		if (pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH]
-				> pwmInTimestamp[motor_x - 1][idx]) {
-			diff = pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH]
-					- pwmInTimestamp[motor_x - 1][idx];
+		if (pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH] > pwmInTimestamp[motor_x - 1][idx]) {
+			diff = pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH]	- pwmInTimestamp[motor_x - 1][idx];
 
 		} else { //if not bigger, must be smaller
-			diff = (_100_MHZ - pwmInTimestamp[motor_x - 1][idx])
-					+ pwmInTimestamp[motor_x - 1][(idx + 1)
-							% PWM_IN_ARRAY_LENGTH];
+			diff = (_100_MHZ - pwmInTimestamp[motor_x - 1][idx]) + pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH];
 		}
 		frequency += diff; // Add the differences. Will be averaged later
 	}
