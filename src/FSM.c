@@ -6,12 +6,10 @@
  */
 #include "FSM.h"
 #include "Buffer.h"
-//#include "motors.h"
-#include "PWM_in.h"
+#include "motors.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "simple_UART.h"
-//#include "temp_sensor.h"
 
 #define CHAR_TO_INT (48)
 
@@ -162,6 +160,7 @@ extern void FSM(void *dummy){
 
 void FSM_Init(){
 
+	init_motors();
 
 	// Create the FSM task
     xTaskCreate(FSM,
