@@ -295,8 +295,7 @@ extern void init_motors() {
 /* Put any static/hidden functions your code may need below here: */
 
 /* Robert's extern/visible functions go below here: */
-extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed,
-		direction_t dir) {
+extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t dir) {
 
 }
 
