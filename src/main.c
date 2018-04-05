@@ -18,6 +18,7 @@
 #include "PWM_in.h"
 #include "LEDs.h"
 #include "FSM.h"
+#include "motors.h"
 
 //#include "UART.h"
 //#include "FSM.h"
@@ -85,7 +86,15 @@ int main(void)
 	init_LED();
 	init_pwm_in();
 	FSM_Init();
-
+	init_motors();
+	motor_set_speed_percent(Motor1, 50, Forward); //PA1
+	motor_set_speed_percent(Motor2, 50, Forward); //PA3
+	motor_set_speed_percent(Motor3, 50, Forward); //PA10
+	motor_set_speed_percent(Motor4, 50, Forward); //PA8
+	motor_set_speed_percent(Motor5, 50, Forward); //PD14
+	motor_set_speed_percent(Motor6, 50, Forward); //PD12
+	motor_set_speed_percent(Motor7, 50, Forward); //PA6
+	motor_set_speed_percent(Motor8, 50, Forward); //PB0
 	vGeneralTaskInit();
 	vTaskStartScheduler();
 
