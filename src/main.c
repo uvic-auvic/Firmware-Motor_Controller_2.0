@@ -41,7 +41,6 @@ int main(void)
 	init_LED();
 	init_motors();
 	FSM_Init();
-	init_motors();
 	motor_set_speed_percent(Motor1, 50, Forward); //PA1
 	motor_set_speed_percent(Motor2, 50, Forward); //PA3
 	motor_set_speed_percent(Motor3, 50, Forward); //PA10
