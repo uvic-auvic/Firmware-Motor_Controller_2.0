@@ -11,150 +11,233 @@
 #include "task.h"
 #include "simple_UART.h"
 
-#define CHAR_TO_INT (48)
+#define NUMBER_OF_MOTORS	8
+
+/** The following defines are determined using the input command structure.
+ * 	Currently, this is stored in the Wiki section of the GitHub repository for this code
+ */
+// Motor Speed(MS) Commands (Motor forward and Motor reverse)
+#define MS_MOTOR_NUMBER_LOCATION 0x01
+#define MS_MOTOR_NUMBER_LENTGH	1
+#define MS_ARGUMENT_LOCATION	0x03
+#define MS_ARGUMENT_LENGTH		2
+#define MS_COMMAND_LENGTH		5
+
+// Pulse Width Modulation(PW) command
+#define PW_MOTOR_NUMBER_LOCATION	0x02
+#define PW_MOTOR_NUMBER_LENTGH		1
+#define PW_ARGUMENT_LOCATION		0x03
+#define PW_ARGUMENT_LENGTH			2
+#define PW_COMMAND_LENGTH			5
+
+// Stop Motor(SM) Command
+#define SM_MOTOR_NUMBER_LOCATION	0x02
+#define SM_MOTOR_NUMBER_LENTGH		1
+#define SM_COMMAND_LENGTH			3
+
+// Revolutions on motor(RV) Command
+#define RV_MOTOR_NUMBER_LOCATION	0x02
+#define RV_MOTOR_NUMBER_LENTGH		1
+#define RV_COMMAND_LENGTH			3
+
+// Calibrate Motor(CL) command
+#define CL_MOTOR_NUMBER_LOCATION	0x02
+#define CL_MOTOR_NUMBER_LENTGH		1
+#define CL_COMMAND_LENGTH			3
+
+// STP command
+#define STP_COMMAND_LENGTH	3
+
+// RID command
+#define RID_COMMAND_LENGTH	3
+
+// TMP command
+#define TMP_COMMAND_LENGTH	3
+
+
+/* Global Variables */
+//UART input commands buffer.
+extern Buffer_t inputBuffer;
+
+/** Converts ASCII to Integer for positive numbers and zero
+ * Returns:
+ * 	ASCII number as an Integer (0 - 99), or
+ * 	-1 - Error: ASCII character is not a number
+ */
+int asciiToInt(char input[], uint8_t length) {
+
+	int output = 0;
+
+	for(int i = 0; i < length; i++) {
+
+		if (input[i] >= '0' && input[i] <= '9') {
+			output = output * 10;
+			output += (int)(input[i] - '0');
+		} else {
+			return -1; //Error: ASCII character is not a number
+		}
+	}
+
+	return output;
+}
 
 extern void FSM(void *dummy){
-	//initialize the FSM and UART
-	UART_init();
 
-	//inputBuffer.size = 0;
+	//initialize UART
+	UART_init();
 
 	//temporary storage to return from buffer
 	char commandString[MAX_BUFFER_SIZE] = "";
-	int tempVar;
 
 	while(1){
 		//it's important that this is while, if the task is accidentally awaken it
-		//can't execute without having at least one item the input puffer
+		//can't execute without having at least one item the input buffer
 		while(inputBuffer.size == 0){
 
 			//sleeps the task into it is notified to continue
 			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 		}
-		//Write a statement here to do a string comparison on commands
+
+		//Pop command from buffer
 		Buffer_pop(&inputBuffer, commandString);
 
-		//UART_push_out_len('\0', 1);
-
-
-		UART_push_out("commandString: ");
-		UART_push_out(commandString);
-		UART_push_out("\n");
-
-
-		char argument = commandString[3];
-		commandString[3] = '\0';
-
-		char tempOutputString[MAX_BUFFER_SIZE] = "";
-
-
 		// MxF command
-		if(commandString[0] == 'M' && commandString[2] == 'F'){
+		if(commandString[0] == 'M' && commandString[2] == 'F' && strlen(commandString) == MS_COMMAND_LENGTH)	{
 
+			int8_t motorNumber = asciiToInt(commandString + MS_MOTOR_NUMBER_LOCATION, MS_MOTOR_NUMBER_LENTGH);
+			int8_t argument = asciiToInt(commandString + MS_ARGUMENT_LOCATION, MS_ARGUMENT_LENGTH);
 
-			GPIOD->ODR ^= GPIO_Pin_12;
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+				// send out error: "Invalid motor number"
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
-			//int motor = commandString[1] - CHAR_TO_INT - 1; // zero based
-			//Motor_Speed(motor, ((unsigned int)(argument)), Forward);
+			} else if (argument < 0) {
+				// send out error: "Argument must be a number between 00-99"
+				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
+
+			} else {
+				//Motor_Speed(motorNumber, argument, Forward);
+			}
 		}
-		/*
+
 		// MxR command
-		else if(commandString[0] == 'M' && commandString[2] == 'R'){
-			int motor = commandString[1] - CHAR_TO_INT - 1; // zero based
-			Motor_Speed(motor, ((unsigned int)(argument)), Reverse);
+		else if(commandString[0] == 'M' && commandString[2] == 'R' && strlen(commandString) == MS_COMMAND_LENGTH){
+
+			int8_t motorNumber = asciiToInt(commandString + MS_MOTOR_NUMBER_LOCATION, MS_MOTOR_NUMBER_LENTGH);
+			int8_t argument = asciiToInt(commandString + MS_ARGUMENT_LOCATION, MS_ARGUMENT_LENGTH);
+
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+				// send out error: "Invalid motor number"
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+
+			} else if (argument < 0) {
+				// send out error: "Argument must be a number between 00-99"
+				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
+
+			} else {
+				//Motor_Speed(motorNumber, argument, Reverse);
+
+			}
 		}
+
 		// PWx command
-		else if(strncmp(commandString, "PW", 2) == 0){
-			int motor = commandString[2] - CHAR_TO_INT - 1; // zero based
-			Motor_PWM(motor, ((unsigned int)(argument)* (10000 / 255)));
+		else if(strncmp(commandString, "PW", 2) == 0 && strlen(commandString) == PW_COMMAND_LENGTH){
+
+			int8_t motorNumber = asciiToInt(commandString + PW_MOTOR_NUMBER_LOCATION, PW_MOTOR_NUMBER_LENTGH);
+			int8_t argument = asciiToInt(commandString + PW_ARGUMENT_LOCATION, PW_ARGUMENT_LENGTH);
+
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+				// send out error: "Invalid motor number"
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+
+			} else if (argument < 0) {
+				// send out error: "Argument must be a number between 00-99"
+				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
+
+			} else {
+				//Motor_PWM(motorNumber, (argument)* (10000 / 255));
+
+			}
 		}
+
 		// RVx command
-		else if(strncmp(commandString, "RV", 2) == 0){
-			// Check if all motors are selected
-			if(commandString[2] == 'A')
-			{
-				// Find rev/s for motor1
-				tempVar = read_frequency_rpm(motor1) / CYCLES_PER_REV;
-				tempOutputString[0] = '(';
-				tempOutputString[1] = (char)(tempVar & 0xFF);
-				tempOutputString[2] = (char)((tempVar >> 8) & 0xFF);
-				tempOutputString[3] = ')';
-				UART_push_out_len(tempOutputString, 4);
+		else if(strncmp(commandString, "RV", 2) == 0 && strlen(commandString) == RV_COMMAND_LENGTH){
 
-				// Find rev/s for motor2
-				tempVar = read_frequency_rpm(motor2) / CYCLES_PER_REV;
-				tempOutputString[0] = '(';
-				tempOutputString[1] = (char)(tempVar & 0xFF);
-				tempOutputString[2] = (char)((tempVar >> 8) & 0xFF);
-				tempOutputString[3] = ')';
-				UART_push_out_len(tempOutputString, 4);
+			int8_t motorNumber = asciiToInt(commandString + RV_MOTOR_NUMBER_LOCATION, RV_MOTOR_NUMBER_LENTGH);
 
-				// Find rev/s for motor3
-				tempVar = read_frequency_rpm(motor3) / CYCLES_PER_REV;
-				tempOutputString[0] = '(';
-				tempOutputString[1] = (char)(tempVar & 0xFF);
-				tempOutputString[2] = (char)((tempVar >> 8) & 0xFF);
-				tempOutputString[3] = ')';
-				UART_push_out_len(tempOutputString, 4);
+			if(commandString[RV_MOTOR_NUMBER_LOCATION] == 'A') {
+				// Send out all motor revolutions
+
+			} else if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+				// send out error: "Invalid motor number"
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+
+			} else {
+				// Send out revolutions for requested motor
+
 			}
-			else{
-				// Convert char to int to get the required motor ('0' is 48 in ASCII)
-				int motor = commandString[2] - CHAR_TO_INT - 1; // zero based
-
-				// Determine the rev/s
-				tempVar = read_frequency_rpm(motor) / CYCLES_PER_REV;
-				tempOutputString[0] = (char)(tempVar & 0xFF);
-				tempOutputString[1] = (char)((tempVar >> 8) & 0xFF);
-				UART_push_out_len(tempOutputString, 2);
-			}
-
-			// For RVx command, we always reach here
-			// Setup end of command
-			tempOutputString[0] = '\r';
-			tempOutputString[1] = '\n';
-			tempOutputString[2] = '\0';
-			UART_push_out(tempOutputString);
 		}
+
+		// CLx command
+		else if (strncmp(commandString, "CL", 2) == 0 && strlen(commandString) == CL_COMMAND_LENGTH) {
+
+			int8_t motorNumber = asciiToInt(commandString + CL_MOTOR_NUMBER_LOCATION, CL_MOTOR_NUMBER_LENTGH);
+
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+				// send out error: "Invalid motor number"
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+
+			} else {
+				// Calibrate Motors
+				// if (motor are calibrated successfully) {
+				//		while(UART_push_out("GOOD\r\n") == -2);
+				// }
+
+			}
+		}
+
 		// SMx command
-		else if(strncmp(commandString, "SM", 2) == 0){
-			int motor = commandString[2] - CHAR_TO_INT - 1; // zero based
-			if(motor >= motor1 && motor <= motor3){
-				// Stop motor
-				Motor_Speed(motor, 0, Forward);
+		else if(strncmp(commandString, "SM", 2) == 0 && strlen(commandString) == SM_COMMAND_LENGTH){
 
-				// Send ACK
-				strcpy(tempOutputString, "ACK\r\n");
-				UART_push_out(tempOutputString);
+			int8_t motorNumber = asciiToInt(commandString + SM_MOTOR_NUMBER_LOCATION, SM_MOTOR_NUMBER_LENTGH);
+
+			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
+				// send out error: "Invalid motor number"
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+
+			} else {
+				// Motor_Speed(motorNumber, 0, Forward);
+				while(UART_push_out("ACK\r\n") == -2);
 			}
 		}
+
+		// STP Command
 		else if(strcmp(commandString, "STP") == 0){
-			Motors_Stop();
 
-			// Send ACK
-			strcpy(tempOutputString, "ACK\r\n");
-			UART_push_out(tempOutputString);
+			// Motors_Stop();
+			while(UART_push_out("ACK\r\n") == -2);
 		}
-		//RID
+
+		//RID command
 		else if(strcmp(commandString, "RID") == 0){
-			UART_push_out("Motor ");
-			UART_push_out("Control");
-			UART_push_out("ler\r\n");
+
+			while(UART_push_out("Motor Controller\r\n") == -2);
+
 		}
-		//Get Temperature
+
+		//TMP command
 		else if(strcmp(commandString, "TMP") == 0){
-			tempVar = actual_temperature;
-			tempOutputString[0] = (char)(tempVar /10 + 48);
-			tempOutputString[1] = (char)(tempVar % 10 + 48);
-			tempOutputString[2] = '\r';
-			tempOutputString[3] = '\n';
-			UART_push_out_len(tempOutputString, 4);
-			}
-		//catch all error
-		*/
 
+			// Get motor temperature
+			// Send out temperature
 
+		}
 
-
+		// No matches
+		else {
+			// send out error: "Invalid command"
+			while(UART_push_out("ERR_CMD_IVD\r\n") == -2);
+		}
 	}
 }
 

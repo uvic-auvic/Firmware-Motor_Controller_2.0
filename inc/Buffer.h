@@ -4,7 +4,6 @@
 #include<string.h>
 #include "stm32f4xx.h"
 
-
 #define MAX_BUFFER_DATA (8)
 #define MAX_BUFFER_SIZE (8)
 
@@ -15,14 +14,14 @@ typedef struct Buffer{
 	uint8_t idx_to_pop; // Stores index of the next element to remove
 	uint8_t size; // Stores the number of elements in the buffer
 	uint8_t overflow_cnt; // Stores the number of buffer overflows
-}Buffer;
+}Buffer_t;
 
 //Public functions ------------------------------
 
-extern void Buffer_add(Buffer* b, const char* str, uint8_t len); // str must be \0 terminated
-extern int Buffer_pop(Buffer* b, char* data);
-extern int Buffer_size(Buffer* b);
-extern int Buffer_overflow(Buffer* b);
+extern void Buffer_add(Buffer_t* b, const char* str, uint8_t len); // str must be \0 terminated
+extern int Buffer_pop(Buffer_t* b, char* data);
+extern int Buffer_size(Buffer_t* b);
+extern int Buffer_overflow(Buffer_t* b);
 extern void Buffer_init();
 
 //-----------------------------------------------

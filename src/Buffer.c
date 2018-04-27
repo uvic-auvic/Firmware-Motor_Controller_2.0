@@ -5,7 +5,7 @@
 
 // Adds an element to the end of the queue
 //  - str (the element) must be NULL terminated ('\0') for strcpy
-extern void Buffer_add(Buffer* b, const char* str, uint8_t len){
+extern void Buffer_add(Buffer_t* b, const char* str, uint8_t len){
 	// Insert element
 	memcpy(b->data[b->idx_to_load], str, len);
 	b->data_len[b->idx_to_load] = len;
@@ -25,7 +25,7 @@ extern void Buffer_add(Buffer* b, const char* str, uint8_t len){
 }
 
 // Removes an element from the front of the queue
-extern int Buffer_pop(Buffer* b, char* data) {
+extern int Buffer_pop(Buffer_t* b, char* data) {
 	uint8_t ret = 0;
 
 	// Check if the buffer has anything to pop
@@ -43,7 +43,7 @@ extern int Buffer_pop(Buffer* b, char* data) {
 }
 
 // Reset all variables of the buffer
-extern void Buffer_init(Buffer* b){
+extern void Buffer_init(Buffer_t* b){
 	b->idx_to_load = 0;
 	b->idx_to_pop = 0;
 	b->size = 0;
@@ -51,11 +51,11 @@ extern void Buffer_init(Buffer* b){
 }
 
 // Get the size of the buffer
-extern int Buffer_size(Buffer* b){
+extern int Buffer_size(Buffer_t* b){
 	return b->size;
 }
 
 // Get the number of overflows that have occurred
-extern int Buffer_overflow(Buffer* b){
+extern int Buffer_overflow(Buffer_t* b){
 	return b->overflow_cnt;
 }
