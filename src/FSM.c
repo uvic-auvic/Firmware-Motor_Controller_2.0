@@ -160,8 +160,6 @@ extern void FSM(void *dummy){
 
 void FSM_Init(){
 
-	init_motors();
-
 	// Create the FSM task
     xTaskCreate(FSM,
 		(const signed char *)"FSM",

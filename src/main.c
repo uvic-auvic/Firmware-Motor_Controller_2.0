@@ -12,6 +12,7 @@
 #include "misc.h"
 #include "LEDs.h"
 #include "FSM.h"
+#include "motors.h"
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -38,6 +39,7 @@ int main(void)
 {
 
 	init_LED();
+	init_motors();
 	FSM_Init();
 
 	vGeneralTaskInit();
