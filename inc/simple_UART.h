@@ -8,10 +8,6 @@
 #ifndef SIMPLE_UART_H_
 #define SIMPLE_UART_H_
 
-#include "Buffer.h"
-
-Buffer inputBuffer; //command from UART gets stored in this buffer
-
 extern void UART_init();
 extern int UART_push_out(char* mesg);
 extern int UART_push_out_len(char* mesg, int len);

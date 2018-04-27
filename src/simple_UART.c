@@ -7,7 +7,7 @@
 
 
 #include "simple_UART.h"
-#include "stm32f4xx_dma.h"
+#include "stm32f4xx.h"
 #include "FreeRTOS.h"
 #include "Task.h"
 #include "Buffer.h"
@@ -20,6 +20,7 @@
 // Receive buffer for UART, no DMA
 char inputString[MAX_BUFFER_DATA]; //string to store individual bytes as they are sent
 uint8_t inputStringIndex = 0;
+Buffer_t inputBuffer; // Buffer to store whole commands. FSM task will pop the commands of out this buffer
 
 // Transmit buffer for UART, no DMA
 #define OUTPUT_BUFFER_SIZE_BYTES	64
@@ -121,7 +122,7 @@ extern int UART_push_out_len(char* mesg, int len) {
 	if(diff <= 0) {
 		diff += OUTPUT_BUFFER_SIZE_BYTES;
 	}
-	if(len > diff) {
+	if(len > (diff - 1)) { //Has to be diff - 1. Cannot write to position pointed to by outputBufferIndexTail.
 		return -2;
 	}
 
@@ -145,14 +146,16 @@ void USART1_IRQHandler() {
 		tempInput[0] = USART1->DR;
 
 		//Check for new line character which indicates end of command
-		//This doesn't take into account some commands where the argument will equal the new line character
 		if (tempInput[0] == '\n') {
-			Buffer_add(&inputBuffer, inputString, MAX_BUFFER_DATA);
-			memset(inputString, 0, 8);
-			inputStringIndex = 0;
 
-			BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-			vTaskNotifyGiveFromISR(UARTTaskToNotify, &xHigherPriorityTaskWoken);
+			if(strlen(inputString) > 0) {
+				Buffer_add(&inputBuffer, inputString, MAX_BUFFER_DATA);
+				memset(inputString, 0, 8);
+				inputStringIndex = 0;
+
+				BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+				vTaskNotifyGiveFromISR(UARTTaskToNotify, &xHigherPriorityTaskWoken);
+			}
 
 		} else {
 			inputString[inputStringIndex] = tempInput[0];
