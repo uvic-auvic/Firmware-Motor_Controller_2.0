@@ -13,6 +13,8 @@
 #include <stdbool.h>
 #include "pwm_in.h"
 
+#define TIM_IT_CC1DE					   ((uint16_t)0x0200)
+
 uint32_t cc1_data[ARRAYSIZE];
 
 void init_timer5(){

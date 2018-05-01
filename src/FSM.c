@@ -10,6 +10,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "simple_UART.h"
+#include "motors.h"
 
 #define NUMBER_OF_MOTORS	8
 
@@ -116,7 +117,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
-				//Motor_Speed(motorNumber, argument, Forward);
+				motor_set_speed_percent(motorNumber, argument, Forward);
 			}
 		}
 
@@ -135,7 +136,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
-				//Motor_Speed(motorNumber, argument, Reverse);
+				motor_set_speed_percent(motorNumber, argument, Reverse);
 
 			}
 		}
@@ -206,7 +207,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else {
-				// Motor_Speed(motorNumber, 0, Forward);
+				motor_set_speed_percent(motorNumber, 0, Forward);
 				while(UART_push_out("ACK\r\n") == -2);
 			}
 		}
@@ -214,7 +215,7 @@ extern void FSM(void *dummy){
 		// STP Command
 		else if(strcmp(commandString, "STP") == 0){
 
-			// Motors_Stop();
+			stop_all_motors();
 			while(UART_push_out("ACK\r\n") == -2);
 		}
 
