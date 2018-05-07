@@ -6,7 +6,7 @@
  */
 #include "FSM.h"
 #include "Buffer.h"
-#include "PWM_in.h"
+#include "motors.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "simple_UART.h"
