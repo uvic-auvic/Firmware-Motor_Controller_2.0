@@ -18,6 +18,16 @@
 #include "task.h"
 
 void blinkyTask(void *dummy){
+	while(1){
+		GPIOD->ODR ^= GPIO_Pin_15;
+		GPIOA->ODR ^= GPIO_Pin_5;
+		/* Toggle at 1 HZ */
+		vTaskDelay(500);
+	}
+}
+
+void updateRPM(void *dummy){
+	uint32_t d = 0;
 
 	GPIOA->ODR |= GPIO_Pin_4;
 	while(1){
@@ -41,14 +51,6 @@ int main(void)
 	init_LED();
 	init_motors();
 	FSM_Init();
-	motor_set_speed_percent(Motor1, 50, Forward); //PA1
-	motor_set_speed_percent(Motor2, 50, Forward); //PA3
-	motor_set_speed_percent(Motor3, 50, Forward); //PA10
-	motor_set_speed_percent(Motor4, 50, Forward); //PA8
-	motor_set_speed_percent(Motor5, 50, Forward); //PD14
-	motor_set_speed_percent(Motor6, 50, Forward); //PD12
-	motor_set_speed_percent(Motor7, 50, Forward); //PA6
-	motor_set_speed_percent(Motor8, 50, Forward); //PB0
 	vGeneralTaskInit();
 	vTaskStartScheduler();
 

@@ -21,6 +21,7 @@ uint32_t pwmInTimestamp[NUMBER_OF_MOTORS][PWM_IN_ARRAY_LENGTH];
 /* Holds the direction of the motor. 0 = Forward, 0 = Reverse.
  * This will be updated when the PWM out for the motor is set */
 uint8_t motorDirection = 0b00000000;
+#define NEUTRAL		(900)
 
 /* Initialization functions
  * ----------------------------------------------------------
@@ -96,8 +97,8 @@ static void init_motor_speed_control()
 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource0, GPIO_AF_TIM3);
 	//timer set up
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-	TIM_TimeBaseStructure.TIM_Period = 1000 - 1;
-	TIM_TimeBaseStructure.TIM_Prescaler = ((SystemCoreClock / 2) / 21000000) - 1;
+	TIM_TimeBaseStructure.TIM_Period = (10000 - 1);
+	TIM_TimeBaseStructure.TIM_Prescaler = (167 -1);
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
@@ -361,13 +362,26 @@ static void enable_timers() {
 	TIM5->CR1 |= TIM_CR1_CEN;
 }
 
+extern void stop_all_motors(){
+	motor_set_speed_percent(Motor1, 0, Forward); //PA1
+	motor_set_speed_percent(Motor2, 0, Forward); //PA3
+	motor_set_speed_percent(Motor3, 0, Forward); //PA10
+	motor_set_speed_percent(Motor4, 0, Forward); //PA8
+	motor_set_speed_percent(Motor5, 0, Forward); //PD14
+	motor_set_speed_percent(Motor6, 0, Forward); //PD12
+	motor_set_speed_percent(Motor7, 0, Forward); //PA6
+	motor_set_speed_percent(Motor8, 0, Forward); //PB0
+}
+
 /* Extern declarations in each section must go below static declarations */
 extern void init_motors() {
 	/* Initialize sub-modules */
 	init_motor_current_temp_MUX();
 	init_motor_speed_control();
 	init_motor_speed_feedback();
+
 	enable_timers();
+	stop_all_motors();
 }
 
 /* Robert's section.
@@ -380,31 +394,37 @@ extern void init_motors() {
 /* Robert's extern/visible functions go below here: */
 extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t dir)
 {
-	if(dir == Reverse) speed *= -1;
+	uint16_t cc_value = speed * 3;
+	if(dir == Forward){
+		cc_value = NEUTRAL + cc_value;
+	}else{
+		cc_value = NEUTRAL - cc_value;
+	}
+
 	switch(motor_x){
 		case Motor1:
-			TIM_SetCompare1(TIM2, speed*10);
+			TIM_SetCompare1(TIM2, cc_value);
 			break;
 		case Motor2:
-			TIM_SetCompare4(TIM2, speed*10);
+			TIM_SetCompare4(TIM2, cc_value);
 			break;
 		case Motor3:
-			TIM_SetCompare3(TIM1, speed*10);
+			TIM_SetCompare3(TIM1, cc_value);
 			break;
 		case Motor4:
-			TIM_SetCompare1(TIM1, speed*10);
+			TIM_SetCompare1(TIM1, cc_value);
 			break;
 		case Motor5:
-			TIM_SetCompare4(TIM4, speed*10);
+			TIM_SetCompare4(TIM4, cc_value);
 			break;
 		case Motor6:
-			TIM_SetCompare1(TIM4, speed*10);
+			TIM_SetCompare1(TIM4, cc_value);
 			break;
 		case Motor7:
-			TIM_SetCompare1(TIM3, speed*10);
+			TIM_SetCompare1(TIM3, cc_value);
 			break;
 		case Motor8:
-			TIM_SetCompare3(TIM3, speed*10);
+			TIM_SetCompare3(TIM3, cc_value);
 			break;
 	}
 

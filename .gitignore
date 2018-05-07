@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Object files
 *.o
 *.ko
@@ -93,3 +94,7 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+=======
+/Debug/
+/Release/
+>>>>>>> origin/master

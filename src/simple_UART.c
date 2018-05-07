@@ -146,7 +146,7 @@ void USART1_IRQHandler() {
 		tempInput[0] = USART1->DR;
 
 		//Check for new line character which indicates end of command
-		if (tempInput[0] == '\n') {
+		if (tempInput[0] == '\n' || tempInput[0] == '\r') {
 
 			if(strlen(inputString) > 0) {
 				Buffer_add(&inputBuffer, inputString, MAX_BUFFER_DATA);
