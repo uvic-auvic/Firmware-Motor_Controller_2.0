@@ -48,4 +48,6 @@ extern uint8_t get_motor_current(motor_sensors_t motor_sensor_x);
 
 extern uint8_t get_motor_temp(motor_sensors_t motor_sensor_x);
 
+extern void stop_all_motors();
+
 #endif

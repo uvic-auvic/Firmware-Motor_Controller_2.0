@@ -150,7 +150,7 @@ void USART1_IRQHandler() {
 
 			if(strlen(inputString) > 0) {
 				Buffer_add(&inputBuffer, inputString, MAX_BUFFER_DATA);
-				memset(inputString, 0, 8);
+				memset(inputString, 0, MAX_BUFFER_DATA);
 				inputStringIndex = 0;
 
 				BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -159,7 +159,7 @@ void USART1_IRQHandler() {
 
 		} else {
 			inputString[inputStringIndex] = tempInput[0];
-			inputStringIndex = (inputStringIndex + 1) & 7;
+			inputStringIndex = (inputStringIndex + 1) & (MAX_BUFFER_DATA -1);
 		}
 
 	} else if ((USART1->SR & USART_FLAG_TXE) == USART_FLAG_TXE) { // If Transmission is complete

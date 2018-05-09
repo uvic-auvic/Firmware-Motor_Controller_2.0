@@ -51,7 +51,7 @@ static void init_motor_current_temp_MUX() {
 }
 
 
-static void init_motor_speed_control()
+static void init_motor_pwm_out()
 {
 	//Enable clock
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
@@ -377,7 +377,7 @@ extern void stop_all_motors(){
 extern void init_motors() {
 	/* Initialize sub-modules */
 	init_motor_current_temp_MUX();
-	init_motor_speed_control();
+	init_motor_pwm_out();
 	init_motor_speed_feedback();
 
 	enable_timers();
