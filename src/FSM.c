@@ -55,6 +55,9 @@
 // TMP command
 #define TMP_COMMAND_LENGTH	3
 
+//MSA command
+#define	MSA_COMMAND_LENGTH	(3 + (NUMBER_OF_MOTORS * 3))
+
 
 /* Global Variables */
 //UART input commands buffer.
@@ -88,7 +91,7 @@ extern void FSM(void *dummy){
 	UART_init();
 
 	//temporary storage to return from buffer
-	char commandString[MAX_BUFFER_SIZE] = "";
+	char commandString[MAX_BUFFER_DATA] = "";
 
 	while(1){
 		//it's important that this is while, if the task is accidentally awaken it
@@ -174,7 +177,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else {
-				// Send out revolutions for requested motor
+				motor_get_rpm(motorNumber);
 
 			}
 		}
@@ -220,7 +223,7 @@ extern void FSM(void *dummy){
 		}
 
 		//RID command
-		else if(strcmp(commandString, "RID") == 0){
+		else if(strncmp(commandString, "RID", 3) == 0){
 
 			while(UART_push_out("Motor Controller\r\n") == -2);
 
@@ -234,10 +237,33 @@ extern void FSM(void *dummy){
 
 		}
 
+		//MSA Command
+		else if (strncmp(commandString, "MSA", 3) == 0 && strlen(commandString) == MSA_COMMAND_LENGTH){
+
+			UART_push_out("MSA_CMD_Reached\r\n");
+
+			//The enumeration for motors starts at index 1
+			for(uint8_t motor = 1; motor <= NUMBER_OF_MOTORS; motor++){
+				char direction_idx = motor * 3;
+				uint8_t speed_idx = direction_idx + 1;
+				uint8_t speed = asciiToInt(&commandString[speed_idx], 2);
+				if(commandString[direction_idx] == 'F'){
+					motor_set_speed_percent(motor, speed, Forward);
+				}else if (commandString[direction_idx] == 'R'){
+					motor_set_speed_percent(motor, speed, Reverse);
+				}else{
+
+				}
+			}
+
+		}
+
 		// No matches
 		else {
 			// send out error: "Invalid command"
 			while(UART_push_out("ERR_CMD_IVD\r\n") == -2);
+			while(UART_push_out(commandString) == -2);
+			while(UART_push_out("\r\n") == -2);
 		}
 	}
 }

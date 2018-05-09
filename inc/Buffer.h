@@ -4,7 +4,7 @@
 #include<string.h>
 #include "stm32f4xx.h"
 
-#define MAX_BUFFER_DATA (8)
+#define MAX_BUFFER_DATA (32)
 #define MAX_BUFFER_SIZE (8)
 
 typedef struct Buffer{
