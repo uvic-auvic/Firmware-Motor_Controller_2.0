@@ -243,8 +243,6 @@ extern void FSM(void *dummy){
 		//MSA Command
 		else if (strncmp(commandString, "MSA", 3) == 0 && strlen(commandString) == MSA_COMMAND_LENGTH){
 
-			UART_push_out("MSA_CMD_Reached\r\n");
-
 			//The enumeration for motors starts at index 1
 			for(uint8_t motor = 1; motor <= NUMBER_OF_MOTORS; motor++){
 				char direction_idx = motor * 3;
