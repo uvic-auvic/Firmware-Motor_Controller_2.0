@@ -28,26 +28,31 @@ uint8_t motorDirection = 0b00000000;
  */
 static void init_motor_current_temp_MUX() {
 	//Enable clock
+/*
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 
+	/*
 	//GPIOC Configuration
 	GPIO_InitTypeDef GPIOC_InitStruct;
 	GPIOC_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
 	GPIOC_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
 	GPIOC_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIOC_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIOC_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_Init(GPIOC, &GPIOC_InitStruct);
+	GPIOC_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	//GPIO_Init(GPIOC, &GPIOC_InitStruct);
+	//*
 
+	/*
 	//GPIOD Configuration
 	GPIO_InitTypeDef GPIOD_InitStruct;
 	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
 	GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
 	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_Init(GPIOD, &GPIOD_InitStruct);
+	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	//GPIO_Init(GPIOD, &GPIOD_InitStruct);
+	//*/
 }
 
 
@@ -68,7 +73,7 @@ static void init_motor_pwm_out()
 	GPIOA_InitStruct.GPIO_Mode = GPIO_Mode_AF;
 	GPIOA_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIOA_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIOA_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIOA_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOA, &GPIOA_InitStruct);
 	//GPIOD configuration for motors 5-6
 	GPIO_InitTypeDef GPIOD_InitStruct;
@@ -76,7 +81,7 @@ static void init_motor_pwm_out()
 	GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_AF;
 	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOD, &GPIOD_InitStruct);
 	//GPIOB configuration for motor 8
 	GPIO_InitTypeDef GPIOB_InitStruct;
@@ -84,7 +89,7 @@ static void init_motor_pwm_out()
 	GPIOB_InitStruct.GPIO_Mode = GPIO_Mode_AF;
 	GPIOB_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIOB_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIOB_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIOB_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOB, &GPIOB_InitStruct);
 	//pin alternate function timer configuration
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource0, GPIO_AF_TIM2);
@@ -118,12 +123,7 @@ static void init_motor_pwm_out()
     //pwm config for channel 4 PA3 motor 2
     TIM_OC4Init(TIM2, &TIM_OCInitStructure);
     TIM_OC4PreloadConfig(TIM2, TIM_OCPreload_Enable);
-    //pwm config for channel 3 PA10 motor 3
-    TIM_OC3Init(TIM1, &TIM_OCInitStructure);
-    TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
-    //pwm config for channel 1 PA8 motor 4
-    TIM_OC1Init(TIM1, &TIM_OCInitStructure);
-    TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
+
     //pwm config for channel 4 PD15 motor 5
     TIM_OC4Init(TIM4, &TIM_OCInitStructure);
     TIM_OC4PreloadConfig(TIM4, TIM_OCPreload_Enable);
@@ -137,12 +137,24 @@ static void init_motor_pwm_out()
     TIM_OC3Init(TIM3, &TIM_OCInitStructure);
     TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Enable);
 
-	//additional code for TIM1
-	TIM_BDTRInitTypeDef TIM_BDTRInitStruct;
-	TIM_BDTRStructInit(&TIM_BDTRInitStruct);
-	TIM_BDTRConfig(TIM1, &TIM_BDTRInitStruct);
-	TIM_CCPreloadControl(TIM1, ENABLE);
 	TIM_CtrlPWMOutputs(TIM1, ENABLE);
+
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
+	TIM_OCInitStructure.TIM_Pulse = NEUTRAL;
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCPolarity_High;
+	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
+	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Reset;
+
+	 //pwm config for channel 3 PA10 motor 3
+		TIM_OC3Init(TIM1, &TIM_OCInitStructure);
+		TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
+		//pwm config for channel 1 PA8 motor 4
+		TIM_OC1Init(TIM1, &TIM_OCInitStructure);
+		TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
+
 
     TIM_Cmd(TIM2, ENABLE);
     TIM_Cmd(TIM1, ENABLE);
@@ -376,11 +388,13 @@ extern void stop_all_motors(){
 /* Extern declarations in each section must go below static declarations */
 extern void init_motors() {
 	/* Initialize sub-modules */
-	init_motor_current_temp_MUX();
 	init_motor_pwm_out();
+	init_motor_current_temp_MUX();
+
 	init_motor_speed_feedback();
 
 	enable_timers();
+
 	stop_all_motors();
 }
 
