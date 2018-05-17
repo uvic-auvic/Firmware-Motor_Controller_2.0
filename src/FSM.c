@@ -99,7 +99,12 @@ extern void FSM(void *dummy){
 		while(inputBuffer.size == 0){
 
 			//sleeps the task into it is notified to continue
-			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
+			uint32_t ticks = ulTaskNotifyTake( pdTRUE, pdMS_TO_TICKS(5000) );
+			//ticks is the amount of time the OS has left to wait before waking by time
+			//if we wake by timeout for commands we want to disable all motors
+			if(ticks == 0){
+				stop_all_motors();
+			}
 		}
 
 		//Pop command from buffer
