@@ -264,14 +264,6 @@ extern void FSM(void *dummy){
 
 		}
 
-		/*else if (strncmp(commandString, "RVA", 3) == 0){
-			for(uint8_t motor = 1; motor <= NUMBER_OF_MOTORS; motor++){
-				uint16_t rpm = motor_get_rpm(motor);
-				while(UART_push_out_len((char *)&rpm, 2) == -2);
-			}
-			while(UART_push_out_len("\r\n", 2) == -2);
-		} */
-
 		// No matches
 		else {
 			// send out error: "Invalid command"
