@@ -37,6 +37,8 @@
 # Auto Generated Files
 *.cfg
 STM32F411VET6.xml
+STM32F411E-DISCO.xml
+.settings/*
 
 # =========================
 # Operating System Files
