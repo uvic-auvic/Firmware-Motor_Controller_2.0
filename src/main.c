@@ -16,6 +16,7 @@
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "ADC.h"
 
 void blinkyTask(void *dummy){
 	while(1){
