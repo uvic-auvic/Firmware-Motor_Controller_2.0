@@ -16,6 +16,7 @@
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "config_pins.h"
 
 void blinkyTask(void *dummy){
 	while(1){
@@ -48,6 +49,7 @@ void vGeneralTaskInit(void){
 int main(void)
 {
 
+	config_pins_init();
 	init_LED();
 	init_motors();
 	FSM_Init();
