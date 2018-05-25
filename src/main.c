@@ -52,6 +52,7 @@ int main(void)
 	init_LED();
 	init_motors();
 	FSM_Init();
+	init_ADC();
 	vGeneralTaskInit();
 	vTaskStartScheduler();
 

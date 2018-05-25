@@ -1,17 +1,10 @@
-/*
- * ADC.h
- *
- *  Created on: May 18, 2018
- *      Author: rober
- */
-
 #ifndef ADC_H_
 #define ADC_H_
 
 uint16_t ADC_Values[18][5];
 uint8_t Read_Position;
 uint8_t ADC_count;
-uint16_t average;
+double average;
 
 typedef enum ADC_sensors{
 	//current
@@ -37,16 +30,16 @@ typedef enum ADC_sensors{
 		Water_ADC2
 } ADC_sensors_t;
 
-typedef enum select_ADC {
-	temperature,
-	current,
-	water
-} select_ADC_t;
-
 typedef enum {
 	off,
 	on
 }find_all_mode_t;
+
+typedef enum {
+	none,
+	once,
+	twice
+} has_read_ADC1_t;
 
 typedef struct {
 	uint16_t motor_1;
@@ -81,10 +74,13 @@ pressure_t pressure;
 
 find_all_mode_t find_all_mode;
 ADC_sensors_t ADC_sensor;
+has_read_ADC1_t has_read_ADC1;
 
-static void Enable_ADC(select_ADC_t select_ADC_x);
+extern void init_ADC();
 
-static uint16_t calculate_average(uint8_t Read_Position_x);
+static void Enable_ADC(ADC_sensors_t ADC_sensor_x);
+
+static double calculate_average(uint8_t Read_Position_x);
 
 extern void read_ADC(ADC_sensors_t ADC_sensor_x);
 
