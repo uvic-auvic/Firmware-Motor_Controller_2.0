@@ -550,35 +550,44 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 extern uint8_t get_motor_current(motor_sensors_t motor_sensor_x) {
 	switch (motor_sensor_x) {
 		case Motor_Curr_ADC1:
-			GPIOC->BSRRL &= ~(GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9); //turn off PC7-PC9
+			GPIOC->BSRRL |= GPIO_Pin_9; //turn on PC9
+			GPIOC->BSRRL &= ~(GPIO_Pin_7 | GPIO_Pin_8);
 			return 0;
 			break;
 		case Motor_Curr_ADC2:
-			GPIOC->BSRRL |= GPIO_Pin_7;	//turn on PC7
+			GPIOC->BSRRL |= GPIO_Pin_9 | GPIO_Pin_8; //turn on PC9 and PC8
+			GPIOC->BSRRL &= ~(GPIO_Pin_7);
 			return 0;
 			break;
 		case Motor_Curr_ADC3:
-			GPIOC->BSRRL |= GPIO_Pin_8; //turn on PC8
+			GPIOC->BSRRL |= GPIO_Pin_9 | GPIO_Pin_8 | GPIO_Pin_7; //turn on PC9, PC8, and PC7
 			return 0;
 			break;
 		case Motor_Curr_ADC4:
-			GPIOC->BSRRL |= GPIO_Pin_7 | GPIO_Pin_8; //turn on PC7-PC8
+			GPIOC->BSRRL |= GPIO_Pin_9 | GPIO_Pin_7; //turn on PC9 and PC7
+			GPIOC->BSRRL &= ~(GPIO_Pin_8);
 			return 0;
 			break;
 		case Motor_Curr_ADC5:
-			GPIOC->BSRRL |= GPIO_Pin_9; //turn on PC9
+			GPIOD->BSRRL |= GPIO_Pin_9; //turn on PD9
+			GPIOD->BSRRL &= ~(GPIO_Pin_8);
+			GPIOB->BSRRL &= ~(GPIO_Pin_15);
 			return 0;
 			break;
 		case Motor_Curr_ADC6:
-			GPIOC->BSRRL |= GPIO_Pin_7 | GPIO_Pin_9; //turn on PC7-PC9
+			GPIOD->BSRRL |= GPIO_Pin_9 | GPIO_Pin_8; //turn on PD9 and PD8
+			GPIOB->BSRRL &= ~(GPIO_Pin_15);
 			return 0;
 			break;
 		case Motor_Curr_ADC7:
-			GPIOC->BSRRL |= GPIO_Pin_8 | GPIO_Pin_9; //turn on PC8-PC9
+			GPIOD->BSRRL |= GPIO_Pin_9 | GPIO_Pin_8; //turn on PD9 and PD8
+			GPIOB->BSRRL |= GPIO_Pin_15; //turn on PB15
 			return 0;
 			break;
 		case Motor_Curr_ADC8:
-			GPIOC->BSRRL |= GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9; //turn on PC7-PC9
+			GPIOD->BSRRL |= GPIO_Pin_9; //turn on PD9
+			GPIOB->BSRRL |= GPIO_Pin_15; //turn on PB15
+			GPIOD->BSRRL &= ~(GPIO_Pin_8);
 			return 0;
 			break;
 		default:
@@ -590,35 +599,44 @@ extern uint8_t get_motor_current(motor_sensors_t motor_sensor_x) {
 extern uint8_t get_motor_temp(motor_sensors_t motor_sensor_x) {
 	switch (motor_sensor_x) {
 		case Motor_Temp_ADC1:
-			GPIOD->BSRRL &= ~(GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9); //turn off PD7-PD9
+			GPIOC->BSRRL |= GPIO_Pin_8; //turn on PC8
+			GPIOC->BSRRL &= ~(GPIO_Pin_9 | GPIO_Pin_7);
 			return 0;
 			break;
 		case Motor_Temp_ADC2:
-			GPIOD->BSRRL |= GPIO_Pin_7; //turn on PD7
+			GPIOC->BSRRL |= GPIO_Pin_7; //turn on PC7
+			GPIOC->BSRRL &= ~(GPIO_Pin_8 | GPIO_Pin_9);
 			return 0;
 			break;
 		case Motor_Temp_ADC3:
-			GPIOD->BSRRL |= GPIO_Pin_8; //turn on PD8
+			GPIOC->BSRRL &= ~(GPIO_Pin_9 | GPIO_Pin_8 | GPIO_Pin_7); //turn off PC7-PC9
 			return 0;
 			break;
 		case Motor_Temp_ADC4:
-			GPIOD->BSRRL |= GPIO_Pin_7 | GPIO_Pin_8; //turn on PD7-PD8
+			GPIOC->BSRRL |= GPIO_Pin_8 | GPIO_Pin_7; //turn on PC7-PC8
+			GPIOC->BSRRL &= ~(GPIO_Pin_9);
 			return 0;
 			break;
 		case Motor_Temp_ADC5:
-			GPIOD->BSRRL |= GPIO_Pin_9; //turn on PD9
+			GPIOD->BSRRL |= GPIO_Pin_8; //turn on PD8
+			GPIOD->BSRRL &= ~(GPIO_Pin_9);
+			GPIOB->BSRRL &= ~(GPIO_Pin_15);
 			return 0;
 			break;
 		case Motor_Temp_ADC6:
-			GPIOD->BSRRL |= GPIO_Pin_7 | GPIO_Pin_9; //turn on PD7-PD9
+			GPIOB->BSRRL |= GPIO_Pin_15; //turn on PB15
+			GPIOD->BSRRL &= ~(GPIO_Pin_8 | GPIO_Pin_9);
 			return 0;
 			break;
 		case Motor_Temp_ADC7:
-			GPIOD->BSRRL |= GPIO_Pin_8 | GPIO_Pin_9; //turn on PD8-PD9
+			GPIOD->BSRRL &= ~(GPIO_Pin_8 | GPIO_Pin_9); //turn off PD8-PD9
+			GPIOB->BSRRL &= ~(GPIO_Pin_15); //turn off PB15
 			return 0;
 			break;
 		case Motor_Temp_ADC8:
-			GPIOD->BSRRL |= GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9; //turn on PD7-PD9
+			GPIOD->BSRRL |= GPIO_Pin_8; //turn on PD8
+			GPIOB->BSRRL |= GPIO_Pin_15; //turn on PB15
+			GPIOD->BSRRL &= ~(GPIO_Pin_9);
 			return 0;
 			break;
 		default:

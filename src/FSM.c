@@ -11,6 +11,7 @@
 #include "task.h"
 #include "simple_UART.h"
 #include "motors.h"
+#include "ADC.h"
 
 #define NUMBER_OF_MOTORS	8
 
@@ -45,6 +46,11 @@
 #define CL_MOTOR_NUMBER_LOCATION	0x02
 #define CL_MOTOR_NUMBER_LENTGH		1
 #define CL_COMMAND_LENGTH			3
+
+//Temperature Motor(TM) command
+#define TM_MOTOR_NUMBER_LOCATION	0x02
+#define TM_MOTOR_NUMBER_LENTGH		1
+#define TM_COMMAND_LENGTH			3
 
 // STP command
 #define STP_COMMAND_LENGTH	3
@@ -244,9 +250,91 @@ extern void FSM(void *dummy){
 
 		//TMP command
 		else if(strcmp(commandString, "TMP") == 0){
-
 			// Get motor temperature
 			// Send out temperature
+
+		}
+
+		//TMA Command
+		else if(strncmp(commandString, "TMA", 3) == 0){
+			//Get temperature of all motors
+			//Send out temperature of each motor
+			ADC_sensors_t ADC_sensor;
+			for(ADC_sensor = Temp_ADC1; ADC_sensor <= Temp_ADC8; ADC_sensor++){
+				uint16_t temperature = return_ADC_value(ADC_sensor);
+				/*itoa(temperature, temperature_string, 10);
+				while(UART_push_out(&temperature_string) == -2); */
+				while(UART_push_out_len((char *)&temperature, 4) == -2);
+				while(UART_push_out_len("\r\n", 2) == -2);
+			}
+
+		}
+
+		//ALL Command
+		else if(strncmp(commandString, "ALL", 3) == 0 && strlen(commandString) == 3){
+			//command for testing ADC
+			find_all_ADC_values();
+			while(UART_push_out("Found All\r\n") == -2);
+		}
+
+		//TMx Command
+		else if(strncmp(commandString, "TM", 2) == 0 && strlen(commandString) == TM_COMMAND_LENGTH){
+			uint16_t temperature;
+			//char temperature_string;
+			switch(commandString[TM_MOTOR_NUMBER_LOCATION]){
+				case '1':
+					temperature = return_ADC_value(Temp_ADC1);
+					//itoa(temperature, temperature_string, 10);
+					while(UART_push_out_len((char *)&temperature, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '2':
+					temperature = return_ADC_value(Temp_ADC2);
+					//itoa(temperature, temperature_string, 10);
+					while(UART_push_out_len((char *)&temperature, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '3':
+					temperature = return_ADC_value(Temp_ADC3);
+					//itoa(temperature, temperature_string, 10);
+					while(UART_push_out_len((char *)&temperature, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '4':
+					temperature = return_ADC_value(Temp_ADC4);
+					//itoa(temperature, temperature_string, 10);
+					while(UART_push_out_len((char *)&temperature, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '5':
+					temperature = return_ADC_value(Temp_ADC5);
+					//itoa(temperature, temperature_string, 10);
+					while(UART_push_out_len((char *)&temperature, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '6':
+					temperature = return_ADC_value(Temp_ADC6);
+					//itoa(temperature, temperature_string, 10);
+					while(UART_push_out_len((char *)&temperature, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '7':
+					temperature = return_ADC_value(Temp_ADC7);
+					//itoa(temperature, temperature_string, 10);
+					while(UART_push_out_len((char *)&temperature, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '8':
+					temperature = return_ADC_value(Temp_ADC8);
+					//itoa(temperature, temperature_string, 10);
+					while(UART_push_out_len((char *)&temperature, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				default:
+					while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+					break;
+
+			}
 
 		}
 

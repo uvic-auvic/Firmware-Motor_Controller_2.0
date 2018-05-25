@@ -36,9 +36,6 @@ typedef enum motor_sensors {
 	Motor_Temp_ADC6,
 	Motor_Temp_ADC7,
 	Motor_Temp_ADC8,
-//water
-	Motor_Water_ADC1,
-	Motor_Water_ADC2
 } motor_sensors_t;
 
 extern void init_motors();
