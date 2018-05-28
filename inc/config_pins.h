@@ -12,7 +12,7 @@ typedef enum configPins {
 	configPin_1 = 1,
 	configPin_2,
 	configPin_3,
-	configPins_4,
+	configPin_4,
 
 } configPins_t;
 
