@@ -19,7 +19,7 @@ typedef enum direction {
 
 typedef enum motor_sensors {
 //current
-	Motor_Curr_ADC1,
+	Motor_Curr_ADC1 = 1,
 	Motor_Curr_ADC2,
 	Motor_Curr_ADC3,
 	Motor_Curr_ADC4,
@@ -44,9 +44,7 @@ extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t
 
 extern int16_t motor_get_rpm(motors_t motor_x);
 
-extern uint8_t get_motor_current(motor_sensors_t motor_sensor_x);
-
-extern uint8_t get_motor_temp(motor_sensors_t motor_sensor_x);
+extern void set_motor_current_temp_MUX(motor_sensors_t motor_sensor_x);
 
 extern void stop_all_motors();
 

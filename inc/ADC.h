@@ -1,7 +1,7 @@
 #ifndef ADC_H_
 #define ADC_H_
 
-uint16_t ADC_Values[18][5];
+uint16_t ADC_Values[17][5];
 uint8_t Read_Position;
 uint8_t ADC_count;
 double average;
@@ -26,55 +26,10 @@ typedef enum ADC_sensors{
 		Temp_ADC7,
 		Temp_ADC8,
 	//water
-		Water_ADC1,
-		Water_ADC2
+		Water_ADC
 } ADC_sensors_t;
 
-typedef enum {
-	off,
-	on
-}find_all_mode_t;
-
-typedef enum {
-	none,
-	once,
-	twice
-} has_read_ADC1_t;
-
-typedef struct {
-	uint16_t motor_1;
-	uint16_t motor_2;
-	uint16_t motor_3;
-	uint16_t motor_4;
-	uint16_t motor_5;
-	uint16_t motor_6;
-	uint16_t motor_7;
-	uint16_t motor_8;
-} motor_temperature_t;
-
-typedef struct {
-	uint16_t motor_1;
-	uint16_t motor_2;
-	uint16_t motor_3;
-	uint16_t motor_4;
-	uint16_t motor_5;
-	uint16_t motor_6;
-	uint16_t motor_7;
-	uint16_t motor_8;
-} motor_current_t;
-
-typedef struct {
-	uint16_t sensor_1;
-	uint16_t sensor_2;
-} pressure_t;
-
-motor_current_t motor_current;
-motor_temperature_t motor_temperature;
-pressure_t pressure;
-
-find_all_mode_t find_all_mode;
 ADC_sensors_t ADC_sensor;
-has_read_ADC1_t has_read_ADC1;
 
 extern void init_ADC();
 
@@ -83,12 +38,6 @@ static void Enable_ADC(ADC_sensors_t ADC_sensor_x);
 static double calculate_average(uint8_t Read_Position_x);
 
 extern void read_ADC(ADC_sensors_t ADC_sensor_x);
-
-static void store_average_ADC_value(ADC_sensors_t ADC_sensor_x);
-
-static void store_all_average_ADC_values();
-
-extern void find_all_ADC_values();
 
 extern uint16_t return_ADC_value(ADC_sensors_t ADC_sensor_x);
 

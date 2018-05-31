@@ -57,6 +57,12 @@
 #define MC_MOTOR_NUMBER_LENGTH		1
 #define MC_COMMAND_LENGTH			3
 
+//Return Water(WTR) command
+#define WTR_COMMAND_LENGTH	3
+
+//Return Water Human Readable (WTH) command
+#define WTH_COMMAND_LENGTH	3
+
 // STP command
 #define STP_COMMAND_LENGTH	3
 
@@ -260,26 +266,6 @@ extern void FSM(void *dummy){
 
 		}
 
-		//TMA Command
-		else if(strncmp(commandString, "TMA", 3) == 0){
-			//Get temperature of all motors
-			//Send out temperature of each motor
-			ADC_sensors_t ADC_sensor;
-			for(ADC_sensor = Temp_ADC1; ADC_sensor <= Temp_ADC8; ADC_sensor++){
-				uint16_t temperature = return_ADC_value(ADC_sensor);
-				while(UART_push_out_len((char *)&temperature, 4) == -2);
-				while(UART_push_out_len("\r\n", 2) == -2);
-			}
-
-		}
-
-		//ALL Command
-		else if(strncmp(commandString, "ALL", 3) == 0 && strlen(commandString) == 3){
-			//command for testing ADC
-			find_all_ADC_values();
-			while(UART_push_out("Found All\r\n") == -2);
-		}
-
 		//TMx Command
 		else if(strncmp(commandString, "TM", 2) == 0 && strlen(commandString) == TM_COMMAND_LENGTH){
 			uint16_t temperature;
@@ -346,11 +332,12 @@ extern void FSM(void *dummy){
 					}
 
 		}
-
+		/*//
 		//MCx Command
 		else if(strncmp(commandString, "MC", 2) == 0 && strlen(commandString) == MC_COMMAND_LENGTH){
 			uint16_t current;
 			ADC_sensors_t ADC_sensor;
+			char current_string[5];
 			switch(commandString[MC_MOTOR_NUMBER_LOCATION]){
 				case 'A':
 					for(ADC_sensor = Curr_ADC1; ADC_sensor <= Curr_ADC8; ADC_sensor++){
@@ -361,8 +348,11 @@ extern void FSM(void *dummy){
 					break;
 				case '1':
 					current = return_ADC_value(Curr_ADC1);
-					while(UART_push_out_len((char *)&current, 4) == -2);
+					itoa(current, current_string, 10);
+					while(UART_push_out_len(current_string, 4) == -2);
+					//while(UART_push_out_len((char *)&current, 4) == -2);
 					while(UART_push_out_len("\r\n", 2) == -2);
+
 					break;
 				case '2':
 					current = return_ADC_value(Curr_ADC2);
@@ -403,6 +393,101 @@ extern void FSM(void *dummy){
 					while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 					break;
 			}
+		}
+		//*/
+		//MCx Command
+		else if(strncmp(commandString, "MC", 2) == 0 && strlen(commandString) == MC_COMMAND_LENGTH){
+			uint16_t current;
+			ADC_sensors_t ADC_sensor;
+			char current_string[5];
+			switch(commandString[MC_MOTOR_NUMBER_LOCATION]){
+				case 'A':
+					for(ADC_sensor = Curr_ADC1; ADC_sensor <= Curr_ADC8; ADC_sensor++){
+						current = return_ADC_value(ADC_sensor);
+						while(UART_push_out_len((char *)&current, 4) == -2);
+						while(UART_push_out_len("\r\n", 2) == -2);
+					}
+					break;
+				case '1':
+					current = return_ADC_value(Curr_ADC1);
+					itoa(current, current_string, 10);
+					while(UART_push_out_len(current_string, 4) == -2);
+					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '2':
+					current = return_ADC_value(Curr_ADC1);
+					itoa(current, current_string, 10);
+					while(UART_push_out_len(current_string, 4) == -2);
+					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '3':
+					current = return_ADC_value(Curr_ADC1);
+					itoa(current, current_string, 10);
+					while(UART_push_out_len(current_string, 4) == -2);
+					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '4':
+					current = return_ADC_value(Curr_ADC1);
+					itoa(current, current_string, 10);
+					while(UART_push_out_len(current_string, 4) == -2);
+					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '5':
+					current = return_ADC_value(Curr_ADC1);
+					itoa(current, current_string, 10);
+					while(UART_push_out_len(current_string, 4) == -2);
+					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '6':
+					current = return_ADC_value(Curr_ADC1);
+					itoa(current, current_string, 10);
+					while(UART_push_out_len(current_string, 4) == -2);
+					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '7':
+					current = return_ADC_value(Curr_ADC1);
+					itoa(current, current_string, 10);
+					while(UART_push_out_len(current_string, 4) == -2);
+					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				case '8':
+					current = return_ADC_value(Curr_ADC1);
+					itoa(current, current_string, 10);
+					while(UART_push_out_len(current_string, 4) == -2);
+					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len("\r\n", 2) == -2);
+					break;
+				default:
+					while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+					break;
+			}
+		}
+
+		//WTR Command
+		else if(strncmp(commandString, "WTR", 3) == 0 && strlen(commandString) == WTR_COMMAND_LENGTH){
+			uint16_t water;
+			water = return_ADC_value(Water_ADC);
+			while(UART_push_out_len((char *)&water, 4) == -2);
+			while(UART_push_out_len("\r\n", 2) == -2);
+
+		}
+
+		//WTH Command
+		else if(strncmp(commandString, "WTH", 3) == 0 && strlen(commandString) == WTH_COMMAND_LENGTH){
+			uint16_t water;
+			char water_string[5];
+			water = return_ADC_value(Water_ADC);
+			itoa(water, water_string, 10);
+			UART_push_out(water_string);
+			while(UART_push_out_len("\r\n", 2) == -2);
+
 		}
 
 		//MSA Command

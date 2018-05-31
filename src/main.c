@@ -17,6 +17,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "ADC.h"
+#include "stdlib.h"
+
+ADC_sensors_t ADC_sensor = Curr_ADC1;
 
 void blinkyTask(void *dummy){
 	while(1){
@@ -24,6 +27,15 @@ void blinkyTask(void *dummy){
 		GPIOA->ODR ^= GPIO_Pin_5;
 		/* Toggle at 1 HZ */
 		vTaskDelay(500);
+	}
+}
+
+void ADCTask(void *dummy){
+	while(1){
+		read_ADC(ADC_sensor);
+		ADC_sensor++;
+		if(ADC_sensor > Water_ADC) ADC_sensor = Curr_ADC1;
+		vTaskDelay(100);
 	}
 }
 
@@ -40,6 +52,12 @@ void updateRPM(void *dummy){
 void vGeneralTaskInit(void){
 	xTaskCreate(blinkyTask,
 		(const signed char *)"blinkyTask",
+		configMINIMAL_STACK_SIZE,
+		NULL,                 // pvParameters
+		tskIDLE_PRIORITY + 1, // uxPriority
+		NULL              ); // pvCreatedTask
+	xTaskCreate(ADCTask,
+		(const signed char *)"ADCTask",
 		configMINIMAL_STACK_SIZE,
 		NULL,                 // pvParameters
 		tskIDLE_PRIORITY + 1, // uxPriority

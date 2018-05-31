@@ -28,33 +28,37 @@ uint8_t motorDirection = 0b00000000;
  */
 static void init_motor_current_temp_MUX() {
 	//Enable clock
-/*
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 
-	/*
 	//GPIOC Configuration
 	GPIO_InitTypeDef GPIOC_InitStruct;
 	GPIOC_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
 	GPIOC_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
-	GPIOC_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIOC_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIOC_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIOC_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	//GPIO_Init(GPIOC, &GPIOC_InitStruct);
-	//*
+	GPIO_Init(GPIOC, &GPIOC_InitStruct);
 
-	/*
 	//GPIOD Configuration
 	GPIO_InitTypeDef GPIOD_InitStruct;
-	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
+	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
 	GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
-	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	//GPIO_Init(GPIOD, &GPIOD_InitStruct);
-	//*/
-}
+	GPIO_Init(GPIOD, &GPIOD_InitStruct);
 
+	//GPIOB Configuration
+	GPIO_InitTypeDef GPIOB_InitStruct;
+	GPIOB_InitStruct.GPIO_Pin = GPIO_Pin_15;
+	GPIOB_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOB_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIOB_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIOB_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOB, &GPIOB_InitStruct);
+}
 
 static void init_motor_pwm_out()
 {
@@ -388,14 +392,14 @@ extern void stop_all_motors(){
 /* Extern declarations in each section must go below static declarations */
 extern void init_motors() {
 	/* Initialize sub-modules */
-	init_motor_pwm_out();
+//	init_motor_pwm_out();
 	init_motor_current_temp_MUX();
 
-	init_motor_speed_feedback();
+	//init_motor_speed_feedback();
 
-	enable_timers();
+	//enable_timers();
 
-	stop_all_motors();
+	//stop_all_motors();
 }
 
 /* Robert's section.
@@ -547,100 +551,75 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
  * ----------------------------------------------------------
  */
 
-extern uint8_t get_motor_current(motor_sensors_t motor_sensor_x) {
+extern void set_motor_current_temp_MUX(motor_sensors_t motor_sensor_x) {
 	switch (motor_sensor_x) {
 		case Motor_Curr_ADC1:
 			GPIOC->BSRRL |= GPIO_Pin_9; //turn on PC9
 			GPIOC->BSRRL &= ~(GPIO_Pin_7 | GPIO_Pin_8);
-			return 0;
 			break;
 		case Motor_Curr_ADC2:
 			GPIOC->BSRRL |= GPIO_Pin_9 | GPIO_Pin_8; //turn on PC9 and PC8
 			GPIOC->BSRRL &= ~(GPIO_Pin_7);
-			return 0;
 			break;
 		case Motor_Curr_ADC3:
 			GPIOC->BSRRL |= GPIO_Pin_9 | GPIO_Pin_8 | GPIO_Pin_7; //turn on PC9, PC8, and PC7
-			return 0;
 			break;
 		case Motor_Curr_ADC4:
 			GPIOC->BSRRL |= GPIO_Pin_9 | GPIO_Pin_7; //turn on PC9 and PC7
 			GPIOC->BSRRL &= ~(GPIO_Pin_8);
-			return 0;
 			break;
 		case Motor_Curr_ADC5:
 			GPIOD->BSRRL |= GPIO_Pin_9; //turn on PD9
 			GPIOD->BSRRL &= ~(GPIO_Pin_8);
 			GPIOB->BSRRL &= ~(GPIO_Pin_15);
-			return 0;
 			break;
 		case Motor_Curr_ADC6:
 			GPIOD->BSRRL |= GPIO_Pin_9 | GPIO_Pin_8; //turn on PD9 and PD8
 			GPIOB->BSRRL &= ~(GPIO_Pin_15);
-			return 0;
 			break;
 		case Motor_Curr_ADC7:
 			GPIOD->BSRRL |= GPIO_Pin_9 | GPIO_Pin_8; //turn on PD9 and PD8
 			GPIOB->BSRRL |= GPIO_Pin_15; //turn on PB15
-			return 0;
 			break;
 		case Motor_Curr_ADC8:
 			GPIOD->BSRRL |= GPIO_Pin_9; //turn on PD9
 			GPIOB->BSRRL |= GPIO_Pin_15; //turn on PB15
 			GPIOD->BSRRL &= ~(GPIO_Pin_8);
-			return 0;
 			break;
-		default:
-			return 0;
-			break;
-	}
-}
-
-extern uint8_t get_motor_temp(motor_sensors_t motor_sensor_x) {
-	switch (motor_sensor_x) {
 		case Motor_Temp_ADC1:
 			GPIOC->BSRRL |= GPIO_Pin_8; //turn on PC8
 			GPIOC->BSRRL &= ~(GPIO_Pin_9 | GPIO_Pin_7);
-			return 0;
 			break;
 		case Motor_Temp_ADC2:
 			GPIOC->BSRRL |= GPIO_Pin_7; //turn on PC7
 			GPIOC->BSRRL &= ~(GPIO_Pin_8 | GPIO_Pin_9);
-			return 0;
 			break;
 		case Motor_Temp_ADC3:
 			GPIOC->BSRRL &= ~(GPIO_Pin_9 | GPIO_Pin_8 | GPIO_Pin_7); //turn off PC7-PC9
-			return 0;
 			break;
 		case Motor_Temp_ADC4:
 			GPIOC->BSRRL |= GPIO_Pin_8 | GPIO_Pin_7; //turn on PC7-PC8
 			GPIOC->BSRRL &= ~(GPIO_Pin_9);
-			return 0;
 			break;
 		case Motor_Temp_ADC5:
 			GPIOD->BSRRL |= GPIO_Pin_8; //turn on PD8
 			GPIOD->BSRRL &= ~(GPIO_Pin_9);
 			GPIOB->BSRRL &= ~(GPIO_Pin_15);
-			return 0;
 			break;
 		case Motor_Temp_ADC6:
 			GPIOB->BSRRL |= GPIO_Pin_15; //turn on PB15
 			GPIOD->BSRRL &= ~(GPIO_Pin_8 | GPIO_Pin_9);
-			return 0;
 			break;
 		case Motor_Temp_ADC7:
 			GPIOD->BSRRL &= ~(GPIO_Pin_8 | GPIO_Pin_9); //turn off PD8-PD9
 			GPIOB->BSRRL &= ~(GPIO_Pin_15); //turn off PB15
-			return 0;
 			break;
 		case Motor_Temp_ADC8:
 			GPIOD->BSRRL |= GPIO_Pin_8; //turn on PD8
 			GPIOB->BSRRL |= GPIO_Pin_15; //turn on PB15
 			GPIOD->BSRRL &= ~(GPIO_Pin_9);
-			return 0;
 			break;
 		default:
-			return 0;
 			break;
 	}
 }
