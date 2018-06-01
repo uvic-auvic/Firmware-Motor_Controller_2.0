@@ -1,12 +1,45 @@
 #include "stm32f4xx.h"
 #include "ADC.h"
-#include "motors.h"
 
-//ADC_sensors_t ADC_sensor = Curr_ADC1;
-motor_sensors_t motor_sensor = Motor_Curr_ADC1;
+uint16_t ADC_Values[17][5];
+uint8_t Read_Position;
+uint8_t ADC_count;
 
+static void init_motor_current_temp_MUX() {
+	//Enable clock
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 
-extern void init_ADC(){
+	//GPIOC Configuration
+	GPIO_InitTypeDef GPIOC_InitStruct;
+	GPIOC_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
+	GPIOC_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOC_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIOC_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIOC_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOC, &GPIOC_InitStruct);
+
+	//GPIOD Configuration
+	GPIO_InitTypeDef GPIOD_InitStruct;
+	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+	GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOD, &GPIOD_InitStruct);
+
+	//GPIOB Configuration
+	GPIO_InitTypeDef GPIOB_InitStruct;
+	GPIOB_InitStruct.GPIO_Pin = GPIO_Pin_15;
+	GPIOB_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOB_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIOB_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIOB_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOB, &GPIOB_InitStruct);
+}
+
+static void init_ADC_read(){
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
 
@@ -43,7 +76,12 @@ extern void init_ADC(){
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
 }
 
-static void Enable_ADC(ADC_sensors_t ADC_sensor_x){
+extern void init_ADC(){
+	init_motor_current_temp_MUX();
+	init_ADC_read();
+}
+
+extern void set_ADC_channel(ADC_sensors_t ADC_sensor_x){
 	//Select ADC channels
 	if(((ADC_sensor_x <= Curr_ADC4) && (ADC_sensor_x >= Curr_ADC1)) || ((ADC_sensor_x <= Temp_ADC4) && (ADC_sensor_x >= Temp_ADC1))){
 		ADC_RegularChannelConfig(ADC1, ADC_Channel_13, 1, ADC_SampleTime_56Cycles); //PC3
@@ -73,142 +111,169 @@ static double calculate_average(uint8_t Read_Position_x){
 	return average;
 }
 
+extern void set_motor_current_temp_MUX(ADC_sensors_t ADC_sensor_x) {
+	switch (ADC_sensor_x) {
+		case Curr_ADC1:
+			GPIOC->ODR |= GPIO_Pin_9; //turn on PC9
+			GPIOC->ODR &= ~(GPIO_Pin_7 | GPIO_Pin_8);
+			break;
+		case Curr_ADC2:
+			GPIOC->ODR |= GPIO_Pin_9 | GPIO_Pin_8; //turn on PC9 and PC8
+			GPIOC->ODR &= ~(GPIO_Pin_7);
+			break;
+		case Curr_ADC3:
+			GPIOC->ODR |= GPIO_Pin_9 | GPIO_Pin_8 | GPIO_Pin_7; //turn on PC9, PC8, and PC7
+			break;
+		case Curr_ADC4:
+			GPIOC->ODR |= GPIO_Pin_9 | GPIO_Pin_7; //turn on PC9 and PC7
+			GPIOC->ODR &= ~(GPIO_Pin_8);
+			break;
+		case Curr_ADC5:
+			GPIOD->ODR |= GPIO_Pin_9; //turn on PD9
+			GPIOD->ODR &= ~(GPIO_Pin_8);
+			GPIOB->ODR &= ~(GPIO_Pin_15);
+			break;
+		case Curr_ADC6:
+			GPIOD->ODR |= GPIO_Pin_9 | GPIO_Pin_8; //turn on PD9 and PD8
+			GPIOB->ODR &= ~(GPIO_Pin_15);
+			break;
+		case Curr_ADC7:
+			GPIOD->ODR |= GPIO_Pin_9 | GPIO_Pin_8; //turn on PD9 and PD8
+			GPIOB->ODR |= GPIO_Pin_15; //turn on PB15
+			break;
+		case Curr_ADC8:
+			GPIOD->ODR |= GPIO_Pin_9; //turn on PD9
+			GPIOB->ODR |= GPIO_Pin_15; //turn on PB15
+			GPIOD->ODR &= ~(GPIO_Pin_8);
+			break;
+		case Temp_ADC1:
+			GPIOC->ODR |= GPIO_Pin_8; //turn on PC8
+			GPIOC->ODR &= ~(GPIO_Pin_9 | GPIO_Pin_7);
+			break;
+		case Temp_ADC2:
+			GPIOC->ODR |= GPIO_Pin_7; //turn on PC7
+			GPIOC->ODR &= ~(GPIO_Pin_8 | GPIO_Pin_9);
+			break;
+		case Temp_ADC3:
+			GPIOC->ODR &= ~(GPIO_Pin_9 | GPIO_Pin_8 | GPIO_Pin_7); //turn off PC7-PC9
+			break;
+		case Temp_ADC4:
+			GPIOC->ODR |= GPIO_Pin_8 | GPIO_Pin_7; //turn on PC7-PC8
+			GPIOC->ODR &= ~(GPIO_Pin_9);
+			break;
+		case Temp_ADC5:
+			GPIOD->ODR |= GPIO_Pin_8; //turn on PD8
+			GPIOD->ODR &= ~(GPIO_Pin_9);
+			GPIOB->ODR &= ~(GPIO_Pin_15);
+			break;
+		case Temp_ADC6:
+			GPIOB->ODR |= GPIO_Pin_15; //turn on PB15
+			GPIOD->ODR &= ~(GPIO_Pin_8 | GPIO_Pin_9);
+			break;
+		case Temp_ADC7:
+			GPIOD->ODR &= ~(GPIO_Pin_8 | GPIO_Pin_9); //turn off PD8-PD9
+			GPIOB->ODR &= ~(GPIO_Pin_15); //turn off PB15
+			break;
+		case Temp_ADC8:
+			GPIOD->ODR |= GPIO_Pin_8; //turn on PD8
+			GPIOB->ODR |= GPIO_Pin_15; //turn on PB15
+			GPIOD->ODR &= ~(GPIO_Pin_9);
+			break;
+		case Water_ADC:
+			break;
+		default:
+			break;
+	}
+}
+
 extern void read_ADC(ADC_sensors_t ADC_sensor_x){
+
 	switch (ADC_sensor_x) {
 	//read current
 		case Curr_ADC1:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Curr_ADC1);
 			Read_Position = 0;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Curr_ADC2:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Curr_ADC2);
 			Read_Position = 1;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Curr_ADC3:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Curr_ADC3);
 			Read_Position = 2;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Curr_ADC4:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Curr_ADC4);
 			Read_Position = 3;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Curr_ADC5:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Curr_ADC5);
 			Read_Position = 4;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Curr_ADC6:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Curr_ADC6);
 			Read_Position = 5;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Curr_ADC7:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Curr_ADC7);
 			Read_Position = 6;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Curr_ADC8:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Curr_ADC8);
 			Read_Position = 7;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		//read Temperature
 		case Temp_ADC1:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Temp_ADC1);
 			Read_Position = 8;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Temp_ADC2:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Temp_ADC2);
 			Read_Position = 9;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Temp_ADC3:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Temp_ADC3);
 			Read_Position = 10;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Temp_ADC4:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Temp_ADC4);
 			Read_Position = 11;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Temp_ADC5:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Temp_ADC5);
 			Read_Position = 12;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Temp_ADC6:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Temp_ADC6);
 			Read_Position = 13;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Temp_ADC7:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Temp_ADC7);
 			Read_Position = 14;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		case Temp_ADC8:
-			set_motor_current_temp_MUX(motor_sensor);
-			//set_motor_current_temp_MUX(Motor_Temp_ADC8);
 			Read_Position = 15;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
 		//read pressure
 		case Water_ADC:
 			Read_Position = 16;
-			Enable_ADC(ADC_sensor_x);
 			ADC_count = 0;
 			ADC_SoftwareStartConv(ADC1);
 			break;
@@ -220,42 +285,42 @@ extern uint16_t return_ADC_value(ADC_sensors_t ADC_sensor_x){
 	//read current
 		case Curr_ADC1:
 			Read_Position = 0;
-			average = calculate_average(Read_Position)*2.15;
+			average = calculate_average(Read_Position)*1.79;
 			return double_to_int(average);
 			break;
 		case Curr_ADC2:
 			Read_Position = 1;
-			average = calculate_average(Read_Position)*2.15;
+			average = calculate_average(Read_Position)*1.79;
 			return double_to_int(average);
 			break;
 		case Curr_ADC3:
 			Read_Position = 2;
-			average = calculate_average(Read_Position)*2.15;
+			average = calculate_average(Read_Position)*1.79;
 			return double_to_int(average);
 			break;
 		case Curr_ADC4:
 			Read_Position = 3;
-			average = calculate_average(Read_Position)*2.15;
+			average = calculate_average(Read_Position)*1.79;
 			return double_to_int(average);
 			break;
 		case Curr_ADC5:
 			Read_Position = 4;
-			average = calculate_average(Read_Position)*2.15;
+			average = calculate_average(Read_Position)*1.79;
 			return double_to_int(average);
 			break;
 		case Curr_ADC6:
 			Read_Position = 5;
-			average = calculate_average(Read_Position)*2.15;
+			average = calculate_average(Read_Position)*1.79;
 			return double_to_int(average);
 			break;
 		case Curr_ADC7:
 			Read_Position = 6;
-			average = calculate_average(Read_Position)*2.15;
+			average = calculate_average(Read_Position)*1.79;
 			return double_to_int(average);
 			break;
 		case Curr_ADC8:
 			Read_Position = 7;
-			average = calculate_average(Read_Position)*2.15;
+			average = calculate_average(Read_Position)*1.79;
 			return double_to_int(average);
 			break;
 		//read Temperature
@@ -302,7 +367,7 @@ extern uint16_t return_ADC_value(ADC_sensors_t ADC_sensor_x){
 void ADC_IRQHandler(void){
 	ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
 	ADC_Values[Read_Position][ADC_count] = ADC1->DR;
-	if(ADC_count < 5){
+	if(ADC_count < 4){
 		ADC_count++;
 		ADC_SoftwareStartConv(ADC1);
 	}

@@ -32,6 +32,9 @@ void blinkyTask(void *dummy){
 
 void ADCTask(void *dummy){
 	while(1){
+		set_motor_current_temp_MUX(ADC_sensor);
+		set_ADC_channel(ADC_sensor);
+		vTaskDelay(1);
 		read_ADC(ADC_sensor);
 		ADC_sensor++;
 		if(ADC_sensor > Water_ADC) ADC_sensor = Curr_ADC1;
@@ -56,6 +59,7 @@ void vGeneralTaskInit(void){
 		NULL,                 // pvParameters
 		tskIDLE_PRIORITY + 1, // uxPriority
 		NULL              ); // pvCreatedTask
+
 	xTaskCreate(ADCTask,
 		(const signed char *)"ADCTask",
 		configMINIMAL_STACK_SIZE,

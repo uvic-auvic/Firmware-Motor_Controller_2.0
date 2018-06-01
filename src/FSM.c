@@ -280,49 +280,41 @@ extern void FSM(void *dummy){
 						break;
 					case '1':
 						temperature = return_ADC_value(Temp_ADC1);
-						//itoa(temperature, temperature_string, 10);
 						while(UART_push_out_len((char *)&temperature, 4) == -2);
 						while(UART_push_out_len("\r\n", 2) == -2);
 						break;
 					case '2':
 						temperature = return_ADC_value(Temp_ADC2);
-						//itoa(temperature, temperature_string, 10);
 						while(UART_push_out_len((char *)&temperature, 4) == -2);
 						while(UART_push_out_len("\r\n", 2) == -2);
 						break;
 					case '3':
 						temperature = return_ADC_value(Temp_ADC3);
-						//itoa(temperature, temperature_string, 10);
 						while(UART_push_out_len((char *)&temperature, 4) == -2);
 						while(UART_push_out_len("\r\n", 2) == -2);
 						break;
 					case '4':
 						temperature = return_ADC_value(Temp_ADC4);
-						//itoa(temperature, temperature_string, 10);
 						while(UART_push_out_len((char *)&temperature, 4) == -2);
 						while(UART_push_out_len("\r\n", 2) == -2);
 						break;
 					case '5':
 						temperature = return_ADC_value(Temp_ADC5);
-						//itoa(temperature, temperature_string, 10);
 						while(UART_push_out_len((char *)&temperature, 4) == -2);
 						while(UART_push_out_len("\r\n", 2) == -2);
 						break;
 					case '6':
 						temperature = return_ADC_value(Temp_ADC6);
-						//itoa(temperature, temperature_string, 10);
 						while(UART_push_out_len((char *)&temperature, 4) == -2);
 						while(UART_push_out_len("\r\n", 2) == -2);
 						break;
 					case '7':
 						temperature = return_ADC_value(Temp_ADC7);
-						//itoa(temperature, temperature_string, 10);
 						while(UART_push_out_len((char *)&temperature, 4) == -2);
 						while(UART_push_out_len("\r\n", 2) == -2);
 						break;
 					case '8':
 						temperature = return_ADC_value(Temp_ADC8);
-						//itoa(temperature, temperature_string, 10);
 						while(UART_push_out_len((char *)&temperature, 4) == -2);
 						while(UART_push_out_len("\r\n", 2) == -2);
 						break;
@@ -332,69 +324,7 @@ extern void FSM(void *dummy){
 					}
 
 		}
-		/*//
-		//MCx Command
-		else if(strncmp(commandString, "MC", 2) == 0 && strlen(commandString) == MC_COMMAND_LENGTH){
-			uint16_t current;
-			ADC_sensors_t ADC_sensor;
-			char current_string[5];
-			switch(commandString[MC_MOTOR_NUMBER_LOCATION]){
-				case 'A':
-					for(ADC_sensor = Curr_ADC1; ADC_sensor <= Curr_ADC8; ADC_sensor++){
-						current = return_ADC_value(ADC_sensor);
-						while(UART_push_out_len((char *)&current, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
-					}
-					break;
-				case '1':
-					current = return_ADC_value(Curr_ADC1);
-					itoa(current, current_string, 10);
-					while(UART_push_out_len(current_string, 4) == -2);
-					//while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
 
-					break;
-				case '2':
-					current = return_ADC_value(Curr_ADC2);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '3':
-					current = return_ADC_value(Curr_ADC3);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '4':
-					current = return_ADC_value(Curr_ADC4);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '5':
-					current = return_ADC_value(Curr_ADC5);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '6':
-					current = return_ADC_value(Curr_ADC6);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '7':
-					current = return_ADC_value(Curr_ADC7);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '8':
-					current = return_ADC_value(Curr_ADC8);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				default:
-					while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
-					break;
-			}
-		}
-		//*/
 		//MCx Command
 		else if(strncmp(commandString, "MC", 2) == 0 && strlen(commandString) == MC_COMMAND_LENGTH){
 			uint16_t current;
@@ -404,64 +334,48 @@ extern void FSM(void *dummy){
 				case 'A':
 					for(ADC_sensor = Curr_ADC1; ADC_sensor <= Curr_ADC8; ADC_sensor++){
 						current = return_ADC_value(ADC_sensor);
-						while(UART_push_out_len((char *)&current, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
+						while(UART_push_out_len((char *)&current, 2) == -2);
 					}
+					while(UART_push_out_len("\r\n", 2) == -2);
 					break;
 				case '1':
 					current = return_ADC_value(Curr_ADC1);
-					itoa(current, current_string, 10);
-					while(UART_push_out_len(current_string, 4) == -2);
-					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len((char *)&current, 4) == -2);
 					while(UART_push_out_len("\r\n", 2) == -2);
 					break;
 				case '2':
 					current = return_ADC_value(Curr_ADC1);
-					itoa(current, current_string, 10);
-					while(UART_push_out_len(current_string, 4) == -2);
-					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len((char *)&current, 4) == -2);
 					while(UART_push_out_len("\r\n", 2) == -2);
 					break;
 				case '3':
 					current = return_ADC_value(Curr_ADC1);
-					itoa(current, current_string, 10);
-					while(UART_push_out_len(current_string, 4) == -2);
-					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len((char *)&current, 4) == -2);
 					while(UART_push_out_len("\r\n", 2) == -2);
 					break;
 				case '4':
 					current = return_ADC_value(Curr_ADC1);
-					itoa(current, current_string, 10);
-					while(UART_push_out_len(current_string, 4) == -2);
-					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len((char *)&current, 4) == -2);
 					while(UART_push_out_len("\r\n", 2) == -2);
 					break;
 				case '5':
 					current = return_ADC_value(Curr_ADC1);
-					itoa(current, current_string, 10);
-					while(UART_push_out_len(current_string, 4) == -2);
-					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len((char *)&current, 4) == -2);
 					while(UART_push_out_len("\r\n", 2) == -2);
 					break;
 				case '6':
 					current = return_ADC_value(Curr_ADC1);
-					itoa(current, current_string, 10);
-					while(UART_push_out_len(current_string, 4) == -2);
-					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len((char *)&current, 4) == -2);
 					while(UART_push_out_len("\r\n", 2) == -2);
 					break;
 				case '7':
 					current = return_ADC_value(Curr_ADC1);
-					itoa(current, current_string, 10);
-					while(UART_push_out_len(current_string, 4) == -2);
-					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len((char *)&current, 4) == -2);
 					while(UART_push_out_len("\r\n", 2) == -2);
 					break;
 				case '8':
 					current = return_ADC_value(Curr_ADC1);
-					itoa(current, current_string, 10);
-					while(UART_push_out_len(current_string, 4) == -2);
-					//while(UART_push_out_len((char *)&current, 4) == -2);
+					while(UART_push_out_len((char *)&current, 4) == -2);
 					while(UART_push_out_len("\r\n", 2) == -2);
 					break;
 				default:
