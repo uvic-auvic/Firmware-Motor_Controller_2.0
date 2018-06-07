@@ -19,26 +19,12 @@
 #include "ADC.h"
 #include "stdlib.h"
 
-ADC_sensors_t ADC_sensor = Curr_ADC1;
-
 void blinkyTask(void *dummy){
 	while(1){
 		GPIOD->ODR ^= GPIO_Pin_15;
 		GPIOA->ODR ^= GPIO_Pin_5;
 		/* Toggle at 1 HZ */
 		vTaskDelay(500);
-	}
-}
-
-void ADCTask(void *dummy){
-	while(1){
-		set_motor_current_temp_MUX(ADC_sensor);
-		set_ADC_channel(ADC_sensor);
-		vTaskDelay(1);
-		read_ADC(ADC_sensor);
-		ADC_sensor++;
-		if(ADC_sensor > Water_ADC) ADC_sensor = Curr_ADC1;
-		vTaskDelay(100);
 	}
 }
 

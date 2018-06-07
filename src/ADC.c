@@ -1,9 +1,17 @@
 #include "stm32f4xx.h"
+#include "FreeRTOSConfig.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "ADC.h"
+#include "stdlib.h"
 
-uint16_t ADC_Values[17][5];
+#define sensor_quantity 17
+#define ammount_of_recorded_values 5
+
+uint16_t ADC_Values[sensor_quantity][ammount_of_recorded_values];
 uint8_t Read_Position;
 uint8_t ADC_count;
+ADC_sensors_t ADC_sensor = Curr_ADC1;
 
 static void init_motor_current_temp_MUX() {
 	//Enable clock
@@ -104,10 +112,10 @@ static uint16_t double_to_int(double double_x){
 
 static double calculate_average(uint8_t Read_Position_x){
 	average = 0;
-	for(ADC_count = 0; ADC_count < 5; ADC_count++){
+	for(ADC_count = 0; ADC_count < ammount_of_recorded_values; ADC_count++){
 	    average += (double)ADC_Values[Read_Position_x][ADC_count];
 	 }
-	average /= 5;
+	average /= ammount_of_recorded_values;
 	return average;
 }
 
@@ -187,187 +195,40 @@ extern void set_motor_current_temp_MUX(ADC_sensors_t ADC_sensor_x) {
 }
 
 extern void read_ADC(ADC_sensors_t ADC_sensor_x){
-
-	switch (ADC_sensor_x) {
-	//read current
-		case Curr_ADC1:
-			Read_Position = 0;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Curr_ADC2:
-			Read_Position = 1;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Curr_ADC3:
-			Read_Position = 2;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Curr_ADC4:
-			Read_Position = 3;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Curr_ADC5:
-			Read_Position = 4;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Curr_ADC6:
-			Read_Position = 5;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Curr_ADC7:
-			Read_Position = 6;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Curr_ADC8:
-			Read_Position = 7;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		//read Temperature
-		case Temp_ADC1:
-			Read_Position = 8;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Temp_ADC2:
-			Read_Position = 9;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Temp_ADC3:
-			Read_Position = 10;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Temp_ADC4:
-			Read_Position = 11;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Temp_ADC5:
-			Read_Position = 12;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Temp_ADC6:
-			Read_Position = 13;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Temp_ADC7:
-			Read_Position = 14;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		case Temp_ADC8:
-			Read_Position = 15;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		//read pressure
-		case Water_ADC:
-			Read_Position = 16;
-			ADC_count = 0;
-			ADC_SoftwareStartConv(ADC1);
-			break;
-		}
+	Read_Position = ADC_sensor_x;
+	ADC_count = 0;
+	ADC_SoftwareStartConv(ADC1);
 }
 
 extern uint16_t return_ADC_value(ADC_sensors_t ADC_sensor_x){
-	switch (ADC_sensor_x) {
-	//read current
-		case Curr_ADC1:
-			Read_Position = 0;
-			average = calculate_average(Read_Position)*1.79;
-			return double_to_int(average);
-			break;
-		case Curr_ADC2:
-			Read_Position = 1;
-			average = calculate_average(Read_Position)*1.79;
-			return double_to_int(average);
-			break;
-		case Curr_ADC3:
-			Read_Position = 2;
-			average = calculate_average(Read_Position)*1.79;
-			return double_to_int(average);
-			break;
-		case Curr_ADC4:
-			Read_Position = 3;
-			average = calculate_average(Read_Position)*1.79;
-			return double_to_int(average);
-			break;
-		case Curr_ADC5:
-			Read_Position = 4;
-			average = calculate_average(Read_Position)*1.79;
-			return double_to_int(average);
-			break;
-		case Curr_ADC6:
-			Read_Position = 5;
-			average = calculate_average(Read_Position)*1.79;
-			return double_to_int(average);
-			break;
-		case Curr_ADC7:
-			Read_Position = 6;
-			average = calculate_average(Read_Position)*1.79;
-			return double_to_int(average);
-			break;
-		case Curr_ADC8:
-			Read_Position = 7;
-			average = calculate_average(Read_Position)*1.79;
-			return double_to_int(average);
-			break;
-		//read Temperature
-		case Temp_ADC1:
-			Read_Position = 8;
-			return calculate_average(Read_Position)*0.0177;
-			break;
-		case Temp_ADC2:
-			Read_Position = 9;
-			return calculate_average(Read_Position)*0.0177;
-			break;
-		case Temp_ADC3:
-			Read_Position = 10;
-			return calculate_average(Read_Position)*0.0177;
-			break;
-		case Temp_ADC4:
-			Read_Position = 11;
-			return calculate_average(Read_Position)*0.0177;
-			break;
-		case Temp_ADC5:
-			Read_Position = 12;
-			return calculate_average(Read_Position)*0.0177;
-			break;
-		case Temp_ADC6:
-			Read_Position = 13;
-			return calculate_average(Read_Position)*0.0177;
-			break;
-		case Temp_ADC7:
-			Read_Position = 14;
-			return calculate_average(Read_Position)*0.0177;
-			break;
-		case Temp_ADC8:
-			Read_Position = 15;
-			return calculate_average(Read_Position)*0.0177;
-			break;
-		//read pressure
-		case Water_ADC:
-			Read_Position = 16;
-			return calculate_average(Read_Position)*0.088;
-			break;
-		}
+	if(ADC_sensor_x <= Curr_ADC8){
+		average= calculate_average(ADC_sensor_x)*1.79;
+		return double_to_int(average);
+	} else if((ADC_sensor_x >= Temp_ADC1) && (ADC_sensor_x <= Temp_ADC8)){
+		average= calculate_average(ADC_sensor_x)*1.79;
+		return double_to_int(average);
+	} else if(ADC_sensor_x == Water_ADC){
+		average = calculate_average(ADC_sensor_x)*0.088;
+		return double_to_int(average);
+	} else return 0;
+}
+
+extern void ADCTask(void *dummy){
+	while(1){
+		set_motor_current_temp_MUX(ADC_sensor);
+		set_ADC_channel(ADC_sensor);
+		vTaskDelay(1);
+		read_ADC(ADC_sensor);
+		ADC_sensor++;
+		if(ADC_sensor > Water_ADC) ADC_sensor = Curr_ADC1;
+		vTaskDelay(100);
+	}
 }
 
 void ADC_IRQHandler(void){
 	ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
 	ADC_Values[Read_Position][ADC_count] = ADC1->DR;
-	if(ADC_count < 4){
+	if(ADC_count < (ammount_of_recorded_values - 1)){
 		ADC_count++;
 		ADC_SoftwareStartConv(ADC1);
 	}

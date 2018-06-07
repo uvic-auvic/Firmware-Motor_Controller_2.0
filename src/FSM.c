@@ -270,122 +270,38 @@ extern void FSM(void *dummy){
 		else if(strncmp(commandString, "TM", 2) == 0 && strlen(commandString) == TM_COMMAND_LENGTH){
 			uint16_t temperature;
 			ADC_sensors_t ADC_sensor;
-			switch(commandString[TM_MOTOR_NUMBER_LOCATION]){
-					case 'A':
-						for(ADC_sensor = Temp_ADC1; ADC_sensor <= Temp_ADC8; ADC_sensor++){
-							temperature = return_ADC_value(ADC_sensor);
-							while(UART_push_out_len((char *)&temperature, 4) == -2);
-							while(UART_push_out_len("\r\n", 2) == -2);
-						}
-						break;
-					case '1':
-						temperature = return_ADC_value(Temp_ADC1);
-						while(UART_push_out_len((char *)&temperature, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
-						break;
-					case '2':
-						temperature = return_ADC_value(Temp_ADC2);
-						while(UART_push_out_len((char *)&temperature, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
-						break;
-					case '3':
-						temperature = return_ADC_value(Temp_ADC3);
-						while(UART_push_out_len((char *)&temperature, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
-						break;
-					case '4':
-						temperature = return_ADC_value(Temp_ADC4);
-						while(UART_push_out_len((char *)&temperature, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
-						break;
-					case '5':
-						temperature = return_ADC_value(Temp_ADC5);
-						while(UART_push_out_len((char *)&temperature, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
-						break;
-					case '6':
-						temperature = return_ADC_value(Temp_ADC6);
-						while(UART_push_out_len((char *)&temperature, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
-						break;
-					case '7':
-						temperature = return_ADC_value(Temp_ADC7);
-						while(UART_push_out_len((char *)&temperature, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
-						break;
-					case '8':
-						temperature = return_ADC_value(Temp_ADC8);
-						while(UART_push_out_len((char *)&temperature, 4) == -2);
-						while(UART_push_out_len("\r\n", 2) == -2);
-						break;
-					default:
-						while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
-						break;
-					}
-
+			if(commandString[TM_MOTOR_NUMBER_LOCATION] == 'A'){
+				ADC_sensors_t ADC_sensor;
+				for(ADC_sensor = Temp_ADC1; ADC_sensor <= Temp_ADC8; ADC_sensor++){
+					temperature = return_ADC_value(ADC_sensor);
+					while(UART_push_out_len((char *)&temperature, 2) == -2);
+				}
+			} else if((commandString[TM_MOTOR_NUMBER_LOCATION] >= '0') && (commandString[TM_MOTOR_NUMBER_LOCATION] <= '8')){
+				temperature = return_ADC_value(asciiToInt(&commandString[TM_MOTOR_NUMBER_LOCATION], 1) - 1);
+				while(UART_push_out_len((char *)&temperature, 2) == -2);
+			} else {
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+			}
 		}
 
 		//MCx Command
 		else if(strncmp(commandString, "MC", 2) == 0 && strlen(commandString) == MC_COMMAND_LENGTH){
 			uint16_t current;
-			ADC_sensors_t ADC_sensor;
-			char current_string[5];
-			switch(commandString[MC_MOTOR_NUMBER_LOCATION]){
-				case 'A':
-					for(ADC_sensor = Curr_ADC1; ADC_sensor <= Curr_ADC8; ADC_sensor++){
-						current = return_ADC_value(ADC_sensor);
-						while(UART_push_out_len((char *)&current, 2) == -2);
-					}
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '1':
-					current = return_ADC_value(Curr_ADC1);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '2':
-					current = return_ADC_value(Curr_ADC1);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '3':
-					current = return_ADC_value(Curr_ADC1);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '4':
-					current = return_ADC_value(Curr_ADC1);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '5':
-					current = return_ADC_value(Curr_ADC1);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '6':
-					current = return_ADC_value(Curr_ADC1);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '7':
-					current = return_ADC_value(Curr_ADC1);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				case '8':
-					current = return_ADC_value(Curr_ADC1);
-					while(UART_push_out_len((char *)&current, 4) == -2);
-					while(UART_push_out_len("\r\n", 2) == -2);
-					break;
-				default:
-					while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
-					break;
+			if(commandString[MC_MOTOR_NUMBER_LOCATION] == 'A'){
+				ADC_sensors_t ADC_sensor;
+				for(ADC_sensor = Curr_ADC1; ADC_sensor <= Curr_ADC8; ADC_sensor++){
+					current = return_ADC_value(ADC_sensor);
+					while(UART_push_out_len((char *)&current, 2) == -2);
+				}
+			} else if((commandString[MC_MOTOR_NUMBER_LOCATION] >= '0') && (commandString[MC_MOTOR_NUMBER_LOCATION] <= '8')){
+				current = return_ADC_value(asciiToInt(&commandString[MC_MOTOR_NUMBER_LOCATION], 1) - 1);
+				while(UART_push_out_len((char *)&current, 2) == -2);
+			} else {
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 			}
 		}
-
 		//WTR Command
-		else if(strncmp(commandString, "WTR", 3) == 0 && strlen(commandString) == WTR_COMMAND_LENGTH){
+	else if(strncmp(commandString, "WTR", 3) == 0 && strlen(commandString) == WTR_COMMAND_LENGTH){
 			uint16_t water;
 			water = return_ADC_value(Water_ADC);
 			while(UART_push_out_len((char *)&water, 4) == -2);

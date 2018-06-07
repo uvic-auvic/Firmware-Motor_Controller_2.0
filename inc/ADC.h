@@ -1,14 +1,17 @@
 #ifndef ADC_H_
 #define ADC_H_
 
-extern uint16_t ADC_Values[17][5];
+#define sensor_quantity 17
+#define ammount_of_recorded_values 5
+
+uint16_t ADC_Values[sensor_quantity][ammount_of_recorded_values];
 extern uint8_t Read_Position;
 extern uint8_t ADC_count;
 double average;
 
 typedef enum ADC_sensors{
 	//current
-		Curr_ADC1 = 1,
+		Curr_ADC1 = 0,
 		Curr_ADC2,
 		Curr_ADC3,
 		Curr_ADC4,
@@ -40,5 +43,7 @@ extern void set_motor_current_temp_MUX(ADC_sensors_t ADC_sensor_x);
 extern void read_ADC(ADC_sensors_t ADC_sensor_x);
 
 extern uint16_t return_ADC_value(ADC_sensors_t ADC_sensor_x);
+
+extern void ADCTask(void *dummy);
 
 #endif /* ADC_H_ */
