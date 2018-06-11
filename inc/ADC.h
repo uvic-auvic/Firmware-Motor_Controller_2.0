@@ -44,6 +44,4 @@ extern void read_ADC(ADC_sensors_t ADC_sensor_x);
 
 extern uint16_t return_ADC_value(ADC_sensors_t ADC_sensor_x);
 
-extern void ADCTask(void *dummy);
-
 #endif /* ADC_H_ */

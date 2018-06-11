@@ -81,6 +81,18 @@ static void init_ADC_read(){
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
 }
 
+static void ADCTask(void *dummy){
+	while(1){
+		set_motor_current_temp_MUX(ADC_sensor);
+		set_ADC_channel(ADC_sensor);
+		vTaskDelay(1);
+		read_ADC(ADC_sensor);
+		ADC_sensor++;
+		if(ADC_sensor > Water_ADC) ADC_sensor = Curr_ADC1;
+		vTaskDelay(100);
+	}
+}
+
 extern void init_ADC(){
 	init_motor_current_temp_MUX();
 	init_ADC_read();
@@ -214,18 +226,6 @@ extern uint16_t return_ADC_value(ADC_sensors_t ADC_sensor_x){
 		average = calculate_average(ADC_sensor_x)*0.088;
 		return double_to_int(average);
 	} else return 0;
-}
-
-extern void ADCTask(void *dummy){
-	while(1){
-		set_motor_current_temp_MUX(ADC_sensor);
-		set_ADC_channel(ADC_sensor);
-		vTaskDelay(1);
-		read_ADC(ADC_sensor);
-		ADC_sensor++;
-		if(ADC_sensor > Water_ADC) ADC_sensor = Curr_ADC1;
-		vTaskDelay(100);
-	}
 }
 
 void ADC_IRQHandler(void){
