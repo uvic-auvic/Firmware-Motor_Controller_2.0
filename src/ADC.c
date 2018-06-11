@@ -5,10 +5,7 @@
 #include "ADC.h"
 #include "stdlib.h"
 
-#define sensor_quantity 17
-#define ammount_of_recorded_values 5
-
-uint16_t ADC_Values[sensor_quantity][ammount_of_recorded_values];
+uint16_t ADC_Values[SENSOR_QUANTITY][AMMOUNT_OF_RECORDED_VALUES];
 uint8_t Read_Position;
 uint8_t ADC_count;
 ADC_sensors_t ADC_sensor = Curr_ADC1;
@@ -87,6 +84,12 @@ static void init_ADC_read(){
 extern void init_ADC(){
 	init_motor_current_temp_MUX();
 	init_ADC_read();
+	xTaskCreate(ADCTask,
+		(const signed char *)"ADCTask",
+		configMINIMAL_STACK_SIZE,
+		NULL,                 // pvParameters
+		tskIDLE_PRIORITY + 1, // uxPriority
+		NULL              ); // pvCreatedTask */
 }
 
 extern void set_ADC_channel(ADC_sensors_t ADC_sensor_x){
@@ -112,10 +115,10 @@ static uint16_t double_to_int(double double_x){
 
 static double calculate_average(uint8_t Read_Position_x){
 	average = 0;
-	for(ADC_count = 0; ADC_count < ammount_of_recorded_values; ADC_count++){
+	for(ADC_count = 0; ADC_count < AMMOUNT_OF_RECORDED_VALUES; ADC_count++){
 	    average += (double)ADC_Values[Read_Position_x][ADC_count];
 	 }
-	average /= ammount_of_recorded_values;
+	average /= AMMOUNT_OF_RECORDED_VALUES;
 	return average;
 }
 
@@ -228,7 +231,7 @@ extern void ADCTask(void *dummy){
 void ADC_IRQHandler(void){
 	ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
 	ADC_Values[Read_Position][ADC_count] = ADC1->DR;
-	if(ADC_count < (ammount_of_recorded_values - 1)){
+	if(ADC_count < (AMMOUNT_OF_RECORDED_VALUES - 1)){
 		ADC_count++;
 		ADC_SoftwareStartConv(ADC1);
 	}

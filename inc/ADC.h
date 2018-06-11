@@ -1,10 +1,10 @@
 #ifndef ADC_H_
 #define ADC_H_
 
-#define sensor_quantity 17
-#define ammount_of_recorded_values 5
+#define SENSOR_QUANTITY 17
+#define AMMOUNT_OF_RECORDED_VALUES 5
 
-uint16_t ADC_Values[sensor_quantity][ammount_of_recorded_values];
+extern uint16_t ADC_Values[SENSOR_QUANTITY][AMMOUNT_OF_RECORDED_VALUES];
 extern uint8_t Read_Position;
 extern uint8_t ADC_count;
 double average;
