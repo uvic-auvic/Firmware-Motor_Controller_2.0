@@ -16,7 +16,8 @@
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "config_pins.h"
+#include "ADC.h"
+#include "stdlib.h"
 
 void blinkyTask(void *dummy){
 	while(1){
@@ -43,16 +44,16 @@ void vGeneralTaskInit(void){
 		configMINIMAL_STACK_SIZE,
 		NULL,                 // pvParameters
 		tskIDLE_PRIORITY + 1, // uxPriority
-		NULL              ); // pvCreatedTask */
+		NULL              ); // pvCreatedTask
 }
 
 int main(void)
 {
 
-	config_pins_init();
 	init_LED();
 	init_motors();
 	FSM_Init();
+	init_ADC();
 	vGeneralTaskInit();
 	vTaskStartScheduler();
 

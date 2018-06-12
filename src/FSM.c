@@ -11,6 +11,7 @@
 #include "task.h"
 #include "simple_UART.h"
 #include "motors.h"
+#include "ADC.h"
 
 #define NUMBER_OF_MOTORS	8
 
@@ -45,6 +46,22 @@
 #define CL_MOTOR_NUMBER_LOCATION	0x02
 #define CL_MOTOR_NUMBER_LENTGH		1
 #define CL_COMMAND_LENGTH			3
+
+//Temperature Motor(TM) command
+#define TM_MOTOR_NUMBER_LOCATION	0x02
+#define TM_MOTOR_NUMBER_LENTGH		1
+#define TM_COMMAND_LENGTH			3
+
+//Motor Current(MC) command
+#define MC_MOTOR_NUMBER_LOCATION	0x02
+#define MC_MOTOR_NUMBER_LENGTH		1
+#define MC_COMMAND_LENGTH			3
+
+//Return Water(WTR) command
+#define WTR_COMMAND_LENGTH	3
+
+//Return Water Human Readable (WTH) command
+#define WTH_COMMAND_LENGTH	3
 
 // STP command
 #define STP_COMMAND_LENGTH	3
@@ -244,9 +261,62 @@ extern void FSM(void *dummy){
 
 		//TMP command
 		else if(strcmp(commandString, "TMP") == 0){
-
 			// Get motor temperature
 			// Send out temperature
+
+		}
+
+		//TMx Command
+		else if(strncmp(commandString, "TM", 2) == 0 && strlen(commandString) == TM_COMMAND_LENGTH){
+			uint16_t temperature;
+			ADC_sensors_t ADC_sensor;
+			if(commandString[TM_MOTOR_NUMBER_LOCATION] == 'A'){
+				ADC_sensors_t ADC_sensor;
+				for(ADC_sensor = Temp_ADC1; ADC_sensor <= Temp_ADC8; ADC_sensor++){
+					temperature = return_ADC_value(ADC_sensor);
+					while(UART_push_out_len((char *)&temperature, 2) == -2);
+				}
+			} else if((commandString[TM_MOTOR_NUMBER_LOCATION] >= '0') && (commandString[TM_MOTOR_NUMBER_LOCATION] <= '8')){
+				temperature = return_ADC_value(asciiToInt(&commandString[TM_MOTOR_NUMBER_LOCATION], 1) - 1);
+				while(UART_push_out_len((char *)&temperature, 2) == -2);
+			} else {
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+			}
+		}
+
+		//MCx Command
+		else if(strncmp(commandString, "MC", 2) == 0 && strlen(commandString) == MC_COMMAND_LENGTH){
+			uint16_t current;
+			if(commandString[MC_MOTOR_NUMBER_LOCATION] == 'A'){
+				ADC_sensors_t ADC_sensor;
+				for(ADC_sensor = Curr_ADC1; ADC_sensor <= Curr_ADC8; ADC_sensor++){
+					current = return_ADC_value(ADC_sensor);
+					while(UART_push_out_len((char *)&current, 2) == -2);
+				}
+			} else if((commandString[MC_MOTOR_NUMBER_LOCATION] >= '0') && (commandString[MC_MOTOR_NUMBER_LOCATION] <= '8')){
+				current = return_ADC_value(asciiToInt(&commandString[MC_MOTOR_NUMBER_LOCATION], 1) - 1);
+				while(UART_push_out_len((char *)&current, 2) == -2);
+			} else {
+				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
+			}
+		}
+		//WTR Command
+	else if(strncmp(commandString, "WTR", 3) == 0 && strlen(commandString) == WTR_COMMAND_LENGTH){
+			uint16_t water;
+			water = return_ADC_value(Water_ADC);
+			while(UART_push_out_len((char *)&water, 4) == -2);
+			while(UART_push_out_len("\r\n", 2) == -2);
+
+		}
+
+		//WTH Command
+		else if(strncmp(commandString, "WTH", 3) == 0 && strlen(commandString) == WTH_COMMAND_LENGTH){
+			uint16_t water;
+			char water_string[5];
+			water = return_ADC_value(Water_ADC);
+			itoa(water, water_string, 10);
+			UART_push_out(water_string);
+			while(UART_push_out_len("\r\n", 2) == -2);
 
 		}
 
