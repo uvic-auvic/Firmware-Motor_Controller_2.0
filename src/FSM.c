@@ -276,7 +276,7 @@ extern void FSM(void *dummy){
 		}
 
 		//RID command
-		else if(strcmp(commandString, "RID") == 0){
+		else if(strcmp(commandString, "RID") == 0 || strcmp(commandString, "*IDN?") == 0){
 
 			while(UART_push_out("Motor Controller\r\n") == -2);
 
