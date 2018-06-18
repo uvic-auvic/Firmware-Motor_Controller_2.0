@@ -406,7 +406,7 @@ extern void FSM(void *dummy){
 
 			//The enumeration for motors starts at index 1
 			for(uint8_t motor = 1; motor <= NUMBER_OF_MOTORS; motor++){
-				char direction_idx = motor * 3;
+				uint8_t direction_idx = motor * 3;
 				uint8_t speed_idx = direction_idx + 1;
 				uint8_t speed = asciiToInt(&commandString[speed_idx], 2);
 				if(commandString[direction_idx] == 'F'){
@@ -433,7 +433,7 @@ void FSM_Init(){
 
 	// Create the FSM task
     xTaskCreate(FSM,
-		(const signed char *)"FSM",
+		(const char *)"FSM",
 		configMINIMAL_STACK_SIZE,
 		NULL,                 // pvParameters
 		tskIDLE_PRIORITY + 1, // uxPriority
