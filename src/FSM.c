@@ -300,9 +300,9 @@ extern void FSM(void *dummy){
 
 		// HUM command
 		else if(strcmp(commandString, "HUM") == 0) {
-			uint8_t humidity = 0x00FF;
+			uint8_t humidity = 0xFF;
 
-			UART_push_out_len((char *)&humidity, 2);
+			UART_push_out_len((char *)&humidity, 1);
 			UART_push_out("\r\n");
 		}
 
@@ -316,7 +316,7 @@ extern void FSM(void *dummy){
 
 		// SCH command
 		else if(strcmp(commandString, "SCH") == 0) {
-			char *current = "100";
+			char *current = "100.000";
 
 			UART_push_out(current);
 			UART_push_out("\r\n");
@@ -340,9 +340,11 @@ extern void FSM(void *dummy){
 					temperature = return_ADC_value(ADC_sensor);
 					while(UART_push_out_len((char *)&temperature, 2) == -2);
 				}
+				while(UART_push_out("\r\n") == -2);
 			} else if((commandString[TM_MOTOR_NUMBER_LOCATION] >= '0') && (commandString[TM_MOTOR_NUMBER_LOCATION] <= '8')){
 				temperature = return_ADC_value(asciiToInt(&commandString[TM_MOTOR_NUMBER_LOCATION], 1) - 1);
 				while(UART_push_out_len((char *)&temperature, 2) == -2);
+				while(UART_push_out("\r\n") == -2);
 			} else {
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 			}
@@ -357,19 +359,21 @@ extern void FSM(void *dummy){
 					current = return_ADC_value(ADC_sensor);
 					while(UART_push_out_len((char *)&current, 2) == -2);
 				}
+				while(UART_push_out("\r\n") == -2);
 			} else if((commandString[MC_MOTOR_NUMBER_LOCATION] >= '0') && (commandString[MC_MOTOR_NUMBER_LOCATION] <= '8')){
 				current = return_ADC_value(asciiToInt(&commandString[MC_MOTOR_NUMBER_LOCATION], 1) - 1);
 				while(UART_push_out_len((char *)&current, 2) == -2);
+				while(UART_push_out("\r\n") == -2);
 			} else {
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 			}
 		}
 
 		//WTR Command
-		else if(strcmp(commandString, "WTR")){
+		else if(strcmp(commandString, "WTR") == 0){
 			uint16_t water;
 			water = return_ADC_value(Water_ADC);
-			while(UART_push_out_len((char *)&water, 4) == -2);
+			while(UART_push_out_len((char *)&water, 2) == -2);
 			while(UART_push_out_len("\r\n", 2) == -2);
 
 		}
