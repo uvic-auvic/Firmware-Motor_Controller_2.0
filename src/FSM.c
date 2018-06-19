@@ -4,6 +4,7 @@
  *  Created on: Feb 3, 2017
  *      Author: asus-andy
  */
+#include <stdlib.h>
 #include "FSM.h"
 #include "Buffer.h"
 #include "motors.h"
@@ -47,11 +48,6 @@
 #define CL_MOTOR_NUMBER_LENTGH		1
 #define CL_COMMAND_LENGTH			3
 
-//Temperature Motor(TM) command
-#define TM_MOTOR_NUMBER_LOCATION	0x02
-#define TM_MOTOR_NUMBER_LENTGH		1
-#define TM_COMMAND_LENGTH			3
-
 //Motor Current(MC) command
 #define MC_MOTOR_NUMBER_LOCATION	0x02
 #define MC_MOTOR_NUMBER_LENGTH		1
@@ -69,11 +65,38 @@
 // RID command
 #define RID_COMMAND_LENGTH	3
 
-// TMP command
-#define TMP_COMMAND_LENGTH	3
+//Temperature Motor(TM) command
+#define TM_MOTOR_NUMBER_LOCATION	0x02
+#define TM_MOTOR_NUMBER_LENTGH		1
+#define TM_COMMAND_LENGTH			3
+
+//Temperature Sensor(TMP) command
+#define TMP_COMMAND_LENGTH			3
+
+//Temperature Sensor Human Readable(TMH) command
+#define TMH_COMMAND_LENGTH			3
+
+//Humidity(HUM) command
+#define HUM_COMMAND_LENGTH			3
+
+//Humidity Human Readable(HUH)
+#define HUH_COMMAND_LENGTH			3
+
+//System Current Human Readable(SCH)
+#define SCH_COMMAND_LENGTH			3
+
+//System Current(SCM)
+#define SCM_COMMAND_LENGTH			3
+
+//Internal Pressure(PIM)
+#define PIN_COMMAND_LENGTH			3
+
+//Internal Pressure Human Readable(PIH)
+#define	PIH_COMMAND_LENGTH			3
 
 //MSA command
 #define	MSA_COMMAND_LENGTH	(3 + (NUMBER_OF_MOTORS * 3))
+
 
 
 /* Global Variables */
@@ -253,17 +276,58 @@ extern void FSM(void *dummy){
 		}
 
 		//RID command
-		else if(strncmp(commandString, "RID", 3) == 0){
+		else if(strcmp(commandString, "RID") == 0 || strcmp(commandString, "*IDN?") == 0){
 
 			while(UART_push_out("Motor Controller\r\n") == -2);
 
 		}
 
-		//TMP command
-		else if(strcmp(commandString, "TMP") == 0){
-			// Get motor temperature
-			// Send out temperature
+		// TMP command
+		else if(strcmp(commandString, "TMP") == 0) {
+			uint16_t temperature = 0x00FF;
 
+			UART_push_out_len((char *)&temperature, 2);
+			UART_push_out("\r\n");
+		}
+
+		// TMH command
+		else if(strcmp(commandString, "TMH") == 0) {
+			char *temperature = "-020.5";
+
+			UART_push_out(temperature);
+			UART_push_out("\r\n");
+		}
+
+		// HUM command
+		else if(strcmp(commandString, "HUM") == 0) {
+			uint8_t humidity = 0xFF;
+
+			UART_push_out_len((char *)&humidity, 1);
+			UART_push_out("\r\n");
+		}
+
+		// HUH command
+		else if(strcmp(commandString, "HUH") == 0) {
+			char *humidity = "100";
+
+			UART_push_out(humidity);
+			UART_push_out("\r\n");
+		}
+
+		// SCH command
+		else if(strcmp(commandString, "SCH") == 0) {
+			char *current = "100.000";
+
+			UART_push_out(current);
+			UART_push_out("\r\n");
+		}
+
+		//SCM command
+		else if(strcmp(commandString, "SCM") == 0) {
+			int32_t current = 0x00FF00FF;
+
+			UART_push_out_len((char *)&current, 3);
+			UART_push_out("\r\n");
 		}
 
 		//TMx Command
@@ -276,9 +340,11 @@ extern void FSM(void *dummy){
 					temperature = return_ADC_value(ADC_sensor);
 					while(UART_push_out_len((char *)&temperature, 2) == -2);
 				}
+				while(UART_push_out("\r\n") == -2);
 			} else if((commandString[TM_MOTOR_NUMBER_LOCATION] >= '0') && (commandString[TM_MOTOR_NUMBER_LOCATION] <= '8')){
 				temperature = return_ADC_value(asciiToInt(&commandString[TM_MOTOR_NUMBER_LOCATION], 1) - 1);
 				while(UART_push_out_len((char *)&temperature, 2) == -2);
+				while(UART_push_out("\r\n") == -2);
 			} else {
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 			}
@@ -293,24 +359,27 @@ extern void FSM(void *dummy){
 					current = return_ADC_value(ADC_sensor);
 					while(UART_push_out_len((char *)&current, 2) == -2);
 				}
+				while(UART_push_out("\r\n") == -2);
 			} else if((commandString[MC_MOTOR_NUMBER_LOCATION] >= '0') && (commandString[MC_MOTOR_NUMBER_LOCATION] <= '8')){
 				current = return_ADC_value(asciiToInt(&commandString[MC_MOTOR_NUMBER_LOCATION], 1) - 1);
 				while(UART_push_out_len((char *)&current, 2) == -2);
+				while(UART_push_out("\r\n") == -2);
 			} else {
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 			}
 		}
+
 		//WTR Command
-	else if(strncmp(commandString, "WTR", 3) == 0 && strlen(commandString) == WTR_COMMAND_LENGTH){
+		else if(strcmp(commandString, "WTR") == 0){
 			uint16_t water;
 			water = return_ADC_value(Water_ADC);
-			while(UART_push_out_len((char *)&water, 4) == -2);
+			while(UART_push_out_len((char *)&water, 2) == -2);
 			while(UART_push_out_len("\r\n", 2) == -2);
 
 		}
 
 		//WTH Command
-		else if(strncmp(commandString, "WTH", 3) == 0 && strlen(commandString) == WTH_COMMAND_LENGTH){
+		else if(strcmp(commandString, "WTH") == 0){
 			uint16_t water;
 			char water_string[5];
 			water = return_ADC_value(Water_ADC);
@@ -320,12 +389,28 @@ extern void FSM(void *dummy){
 
 		}
 
+		// PIM command
+		else if(strcmp(commandString, "PIM") == 0) {
+			uint16_t pressure = 0x00FF;
+
+			UART_push_out_len((char *)&pressure, 2);
+			UART_push_out("\r\n");
+		}
+
+		// PIH command
+		else if(strcmp(commandString, "PIH") == 0) {
+			char *pressure = "12.34";
+
+			UART_push_out(pressure);
+			UART_push_out("\r\n");
+		}
+
 		//MSA Command
 		else if (strncmp(commandString, "MSA", 3) == 0 && strlen(commandString) == MSA_COMMAND_LENGTH){
 
 			//The enumeration for motors starts at index 1
 			for(uint8_t motor = 1; motor <= NUMBER_OF_MOTORS; motor++){
-				char direction_idx = motor * 3;
+				uint8_t direction_idx = motor * 3;
 				uint8_t speed_idx = direction_idx + 1;
 				uint8_t speed = asciiToInt(&commandString[speed_idx], 2);
 				if(commandString[direction_idx] == 'F'){
@@ -336,7 +421,6 @@ extern void FSM(void *dummy){
 					//If we don't see R or F let's do nothing
 				}
 			}
-
 		}
 
 		// No matches
@@ -353,7 +437,7 @@ void FSM_Init(){
 
 	// Create the FSM task
     xTaskCreate(FSM,
-		(const signed char *)"FSM",
+		(const char *)"FSM",
 		configMINIMAL_STACK_SIZE,
 		NULL,                 // pvParameters
 		tskIDLE_PRIORITY + 1, // uxPriority
