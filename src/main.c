@@ -47,7 +47,6 @@ void vGeneralTaskInit(void){
 
 int main(void)
 {
-
 	init_LED();
 	init_motors();
 	FSM_Init();

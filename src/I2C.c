@@ -22,17 +22,16 @@ uint8_t *I2C_inputBuffer;
 //bytes count
 volatile uint8_t bytes_count = 0;
 
-//slave address
-volatile uint8_t slave_address;
-
 //bytes total
 volatile uint8_t bytes_total;
 
 volatile I2C_state_t I2C_state = nothing;
 
 extern void I2C_setup(){
+
 	//Enable clock for GPIOB
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
 	//GPIOB setup for SCL and SDA
 	GPIO_InitTypeDef GPIOB_Init;
 	GPIOB_Init.GPIO_Mode = GPIO_Mode_AF;
@@ -68,19 +67,15 @@ static void I2C_init(){
 	I2C_Init_Struct.I2C_ClockSpeed = 50000;
 	I2C_Init_Struct.I2C_DutyCycle = I2C_DutyCycle_2;
 	I2C_Init(I2C1, &I2C_Init_Struct);
+
 	//Enable I2C
 	I2C1->CR1 |= I2C_CR1_PE;
 }
 
-extern void I2C_read(uint8_t address, uint8_t numBytes, uint8_t *message){
+extern void I2C_read(uint8_t slave_address, uint8_t numBytes, uint8_t *message){
 	while(I2C_state != nothing);
-	int i = 10000;
-	while (i > 0){
-		i--;
-	}
 	I2C_init();
 	I2C_state = read;
-	slave_address = address;
 	bytes_total = numBytes;
 	I2C_inputBuffer = message;
 	I2C1->CR1 |= I2C_CR1_START;
@@ -89,11 +84,10 @@ extern void I2C_read(uint8_t address, uint8_t numBytes, uint8_t *message){
 	I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN;
 }
 
-extern void I2C_write(uint8_t address, uint8_t numBytes, uint8_t message[]){
+extern void I2C_write(uint8_t slave_address, uint8_t numBytes, uint8_t message[]){
 	while(I2C_state != nothing);
 	I2C_init();
 	I2C_state = write;
-	slave_address = address;
 	bytes_total = numBytes;
 	memcpy(I2C_OutputBuffer, message, numBytes);
 	I2C1->CR1 |= I2C_CR1_START;
@@ -148,8 +142,6 @@ void I2C1_EV_IRQHandler(void) {
 			I2C_DeInit(I2C1);
 			I2C_state = nothing;
 		}
-	//Waits for byte transfer finished bit
-	}else if((I2C1->SR1 & I2C_SR1_BTF) == I2C_SR1_BTF){
 	}
 }
 
