@@ -4,6 +4,7 @@
 #define _100_MHZ	(100 * 1000 * 1000)
 #define _10_MHZ		(10 * 1000 * 1000)
 
+//PWM In Defines
 #define TIM5_PRESCALER	0
 #define PWM_IN_TIMER_FREQ	(_100_MHZ /(TIM5_PRESCALER + 1))
 #define NUMBER_OF_MOTORS	8
@@ -11,6 +12,9 @@
 #define PULSE_PER_ROTATION	7
 #define FREQ_TO_RPM_CONV	((float)60 / (PULSE_PER_ROTATION))
 #define INTERNAL_OSC_CALIB	1 // In case we decide to adjust for the manufacturing error in the internal clock
+
+//PWM Out Defines
+#define NEUTRAL		(3600)
 
 /* Global Variables
  * ----------------------------------------------------------
@@ -21,7 +25,7 @@ uint32_t pwmInTimestamp[NUMBER_OF_MOTORS][PWM_IN_ARRAY_LENGTH];
 /* Holds the direction of the motor. 0 = Forward, 0 = Reverse.
  * This will be updated when the PWM out for the motor is set */
 uint8_t motorDirection = 0b00000000;
-#define NEUTRAL		(900)
+
 
 /* Initialization functions
  * ----------------------------------------------------------
@@ -33,11 +37,13 @@ static void init_motor_pwm_out()
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
 	//init timers
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+
 	//GPIOA Configuration for motors 1-4 and 7
 	GPIO_InitTypeDef GPIOA_InitStruct;
 	GPIOA_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_3 | GPIO_Pin_10 | GPIO_Pin_8 | GPIO_Pin_6;
@@ -46,6 +52,7 @@ static void init_motor_pwm_out()
 	GPIOA_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIOA_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOA, &GPIOA_InitStruct);
+
 	//GPIOD configuration for motors 5-6
 	GPIO_InitTypeDef GPIOD_InitStruct;
 	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_15 | GPIO_Pin_12;
@@ -54,6 +61,7 @@ static void init_motor_pwm_out()
 	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOD, &GPIOD_InitStruct);
+
 	//GPIOB configuration for motor 8
 	GPIO_InitTypeDef GPIOB_InitStruct;
 	GPIOB_InitStruct.GPIO_Pin = GPIO_Pin_0;
@@ -62,6 +70,7 @@ static void init_motor_pwm_out()
 	GPIOB_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIOB_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOB, &GPIOB_InitStruct);
+
 	//pin alternate function timer configuration
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource0, GPIO_AF_TIM2);
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_TIM2);
@@ -71,10 +80,11 @@ static void init_motor_pwm_out()
 	GPIO_PinAFConfig(GPIOD, GPIO_PinSource12, GPIO_AF_TIM4);
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource6, GPIO_AF_TIM3);
 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource0, GPIO_AF_TIM3);
+
 	//timer set up
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-	TIM_TimeBaseStructure.TIM_Period = (10000 - 1);
-	TIM_TimeBaseStructure.TIM_Prescaler = (167 -1);
+	TIM_TimeBaseStructure.TIM_Period = (40000 - 1);
+	TIM_TimeBaseStructure.TIM_Prescaler = (42 - 1);
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
@@ -82,6 +92,7 @@ static void init_motor_pwm_out()
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
 	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+
 	//pwm init
 	TIM_OCInitTypeDef TIM_OCInitStructure;
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
@@ -119,12 +130,12 @@ static void init_motor_pwm_out()
 	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
 	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Reset;
 
-	 //pwm config for channel 3 PA10 motor 3
-		TIM_OC3Init(TIM1, &TIM_OCInitStructure);
-		TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
-		//pwm config for channel 1 PA8 motor 4
-		TIM_OC1Init(TIM1, &TIM_OCInitStructure);
-		TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
+	//pwm config for channel 3 PA10 motor 3
+	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
+	TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
+	//pwm config for channel 1 PA8 motor 4
+	TIM_OC1Init(TIM1, &TIM_OCInitStructure);
+	TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
 
 
     TIM_Cmd(TIM2, ENABLE);
@@ -191,6 +202,7 @@ static void init_PWM_in_timer() {
 
 	//Timer will be enabled in another function which will be called last. This is to avoid conflicts.
 }
+
 
 static void init_PWM_in_GPIO() {
 
@@ -376,9 +388,9 @@ extern void init_motors() {
 /* Put any static/hidden functions your code may need below here: */
 
 /* Robert's extern/visible functions go below here: */
-extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t dir)
+extern void motor_set_speed_percent(motors_t motor_x, uint16_t speed, direction_t dir)
 {
-	uint16_t cc_value = speed * 3;
+	uint16_t cc_value = (speed * 12)/10;
 	if(dir == Forward){
 		cc_value = NEUTRAL + cc_value;
 	}else{

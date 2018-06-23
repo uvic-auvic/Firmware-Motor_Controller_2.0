@@ -97,9 +97,10 @@
 #define PIH_OUTPUT_LENGTH			7
 
 //MSA command
-#define	MSA_COMMAND_LENGTH	(3 + (NUMBER_OF_MOTORS * 3))
-
-
+#define	MSA_COMMAND_LENGTH_2ARG	(3 + (NUMBER_OF_MOTORS * 3))
+#define	MSA_COMMAND_LENGTH_3ARG	(3 + (NUMBER_OF_MOTORS * 4))
+#define MSA_3ARG_MOTOR_NUMBER_LOCATION 0x4
+#define MSA_3ARG_MOTOR_DIRECTION_LOCATION 0x3
 
 /* Global Variables */
 //UART input commands buffer.
@@ -187,7 +188,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
-				motor_set_speed_percent(motorNumber, argument, Forward);
+				motor_set_speed_percent(motorNumber, argument * 10, Forward);
 			}
 		}
 
@@ -206,7 +207,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
-				motor_set_speed_percent(motorNumber, argument, Reverse);
+				motor_set_speed_percent(motorNumber, argument * 10, Reverse);
 
 			}
 		}
@@ -249,7 +250,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else {
-				char bufs[5];
+				char bufs[5] = {};
 				uint16_t rpm = motor_get_rpm(motorNumber);
 				itoa(rpm, bufs, 10);
 				while(UART_push_out_len(bufs, 5) == -2);
@@ -428,14 +429,31 @@ extern void FSM(void *dummy){
 			while(UART_push_out("\r\n") == -2);
 		}
 
-		//MSA Command
-		else if (strncmp(commandString, "MSA", 3) == 0 && strlen(commandString) == MSA_COMMAND_LENGTH){
+		//MSA Command, 2 arguments for motor speed
+		else if (strncmp(commandString, "MSA", 3) == 0 && strlen(commandString) == MSA_COMMAND_LENGTH_2ARG){
 
 			//The enumeration for motors starts at index 1
 			for(uint8_t motor = 1; motor <= NUMBER_OF_MOTORS; motor++){
 				uint8_t direction_idx = motor * 3;
 				uint8_t speed_idx = direction_idx + 1;
 				uint8_t speed = asciiToInt(&commandString[speed_idx], 2);
+				if(commandString[direction_idx] == 'F'){
+					motor_set_speed_percent(motor, (speed * 10), Forward);
+				}else if (commandString[direction_idx] == 'R'){
+					motor_set_speed_percent(motor, (speed * 10), Reverse);
+				}else{
+					//If we don't see R or F let's do nothing
+				}
+			}
+		}
+
+		//MSA Command, 3 arguments for motor speed
+		else if(strncmp(commandString, "MSA", 3) == 0 && strlen(commandString) == MSA_COMMAND_LENGTH_3ARG) {
+			//The enumeration for motors starts at index 1
+			for(uint8_t motor = 1; motor <= NUMBER_OF_MOTORS; motor++){
+				uint8_t direction_idx = MSA_3ARG_MOTOR_DIRECTION_LOCATION + (motor-1) * 4;
+				uint8_t speed_idx = direction_idx + 1;
+				uint16_t speed = asciiToInt(&commandString[speed_idx], 3);
 				if(commandString[direction_idx] == 'F'){
 					motor_set_speed_percent(motor, speed, Forward);
 				}else if (commandString[direction_idx] == 'R'){
@@ -445,6 +463,8 @@ extern void FSM(void *dummy){
 				}
 			}
 		}
+
+
 
 		// No matches
 		else {

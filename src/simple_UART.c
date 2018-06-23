@@ -159,7 +159,7 @@ void USART1_IRQHandler() {
 
 		} else {
 			inputString[inputStringIndex] = tempInput[0];
-			inputStringIndex = (inputStringIndex + 1) & (MAX_BUFFER_DATA -1);
+			inputStringIndex = (inputStringIndex + 1) % MAX_BUFFER_DATA;
 		}
 
 	} else if ((USART1->SR & USART_FLAG_TXE) == USART_FLAG_TXE) { // If Transmission is complete
