@@ -54,9 +54,6 @@
 #define MC_MOTOR_NUMBER_LENGTH		1
 #define MC_COMMAND_LENGTH			3
 
-//Supply Current(CRS) command
-#define CRS_COMMAND_LENGTH			3
-
 //Return Water(WTR) command
 #define WTR_COMMAND_LENGTH	3
 
@@ -392,13 +389,6 @@ extern void FSM(void *dummy){
 			} else {
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 			}
-		}
-
-		//CRS command
-		else if(strcmp(commandString, "CRS") == 0) {
-
-			while(UART_push_out_len((char *)&supply_current, 3) == -2);
-			while(UART_push_out("\r\n") == -2);
 		}
 
 		//WTR Command

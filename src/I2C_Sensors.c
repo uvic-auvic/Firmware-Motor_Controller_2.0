@@ -13,7 +13,7 @@
 uint32_t supply_current = 0;
 uint16_t temperature = 0;
 uint16_t humidity = 0;
-uint32_t internalPressure = 0;
+uint32_t internalPressure = 123456;
 
 static void update_I2C_Sensors() {
 
