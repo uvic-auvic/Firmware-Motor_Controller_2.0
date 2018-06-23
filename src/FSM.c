@@ -13,6 +13,7 @@
 #include "simple_UART.h"
 #include "motors.h"
 #include "ADC.h"
+#include "I2C_Sensors.h"
 
 #define NUMBER_OF_MOTORS	8
 
@@ -52,6 +53,9 @@
 #define MC_MOTOR_NUMBER_LOCATION	0x02
 #define MC_MOTOR_NUMBER_LENGTH		1
 #define MC_COMMAND_LENGTH			3
+
+//Supply Current(CRS) command
+#define CRS_COMMAND_LENGTH			3
 
 //Return Water(WTR) command
 #define WTR_COMMAND_LENGTH	3
@@ -93,6 +97,7 @@
 
 //Internal Pressure Human Readable(PIH)
 #define	PIH_COMMAND_LENGTH			3
+#define PIH_OUTPUT_LENGTH			7
 
 //MSA command
 #define	MSA_COMMAND_LENGTH	(3 + (NUMBER_OF_MOTORS * 3))
@@ -125,6 +130,26 @@ int asciiToInt(char input[], uint8_t length) {
 	return output;
 }
 
+void uint_to_ASCII_with_decimal(char *asciiString, uint32_t value, int8_t numOfDecimal, int8_t numOfDigits) {
+	//TO DO: Return error codes
+
+	int8_t i = numOfDigits;
+
+	for(; i > (numOfDigits - numOfDecimal); i--) {
+		asciiString[i] = (value % 10) + '0';
+		value /= 10;
+	}
+
+	asciiString[i] = '.';
+	i--;
+
+	for(; i >= 0; i--) {
+		asciiString[i] = (value % 10) + '0';
+		value /= 10;
+	}
+
+}
+
 extern void FSM(void *dummy){
 
 	//initialize UART
@@ -136,7 +161,7 @@ extern void FSM(void *dummy){
 	while(1){
 		//it's important that this is while, if the task is accidentally awaken it
 		//can't execute without having at least one item the input buffer
-		while(inputBuffer.size == 0){
+		while(inputBuffer .size == 0){
 
 			//sleeps the task into it is notified to continue
 			uint32_t ticks = ulTaskNotifyTake( pdTRUE, pdMS_TO_TICKS(5000) );
@@ -230,8 +255,8 @@ extern void FSM(void *dummy){
 				char bufs[5];
 				uint16_t rpm = motor_get_rpm(motorNumber);
 				itoa(rpm, bufs, 10);
-				UART_push_out_len(bufs, 5);
-				UART_push_out_len("\r\n", 2);
+				while(UART_push_out_len(bufs, 5) == -2);
+				while(UART_push_out_len("\r\n", 2) == -2);
 			}
 		}
 
@@ -286,48 +311,48 @@ extern void FSM(void *dummy){
 		else if(strcmp(commandString, "TMP") == 0) {
 			uint16_t temperature = 0x00FF;
 
-			UART_push_out_len((char *)&temperature, 2);
-			UART_push_out("\r\n");
+			while(UART_push_out_len((char *)&temperature, 2) == -2);
+			while(UART_push_out("\r\n") == -2);
 		}
 
 		// TMH command
 		else if(strcmp(commandString, "TMH") == 0) {
 			char *temperature = "-020.5";
 
-			UART_push_out(temperature);
-			UART_push_out("\r\n");
+			while(UART_push_out(temperature) == -2);
+			while(UART_push_out("\r\n") == -2);
 		}
 
 		// HUM command
 		else if(strcmp(commandString, "HUM") == 0) {
 			uint8_t humidity = 0xFF;
 
-			UART_push_out_len((char *)&humidity, 1);
-			UART_push_out("\r\n");
+			while(UART_push_out_len((char *)&humidity, 1) == -2);
+			while(UART_push_out("\r\n") == -2);
 		}
 
 		// HUH command
 		else if(strcmp(commandString, "HUH") == 0) {
 			char *humidity = "100";
 
-			UART_push_out(humidity);
-			UART_push_out("\r\n");
+			while(UART_push_out(humidity) == -2);
+			while(UART_push_out("\r\n") == -2);
 		}
 
 		// SCH command
 		else if(strcmp(commandString, "SCH") == 0) {
 			char *current = "100.000";
 
-			UART_push_out(current);
-			UART_push_out("\r\n");
+			while(UART_push_out(current) == -2);
+			while(UART_push_out("\r\n") == -2);
 		}
 
 		//SCM command
 		else if(strcmp(commandString, "SCM") == 0) {
 			int32_t current = 0x00FF00FF;
 
-			UART_push_out_len((char *)&current, 3);
-			UART_push_out("\r\n");
+			while(UART_push_out_len((char *)&current, 3) == -2);
+			while(UART_push_out("\r\n") == -2);
 		}
 
 		//TMx Command
@@ -369,6 +394,13 @@ extern void FSM(void *dummy){
 			}
 		}
 
+		//CRS command
+		else if(strcmp(commandString, "CRS") == 0) {
+
+			while(UART_push_out_len((char *)&supply_current, 3) == -2);
+			while(UART_push_out("\r\n") == -2);
+		}
+
 		//WTR Command
 		else if(strcmp(commandString, "WTR") == 0){
 			uint16_t water;
@@ -384,25 +416,26 @@ extern void FSM(void *dummy){
 			char water_string[5];
 			water = return_ADC_value(Water_ADC);
 			itoa(water, water_string, 10);
-			UART_push_out(water_string);
+			while(UART_push_out(water_string) == -2);
 			while(UART_push_out_len("\r\n", 2) == -2);
 
 		}
 
 		// PIM command
 		else if(strcmp(commandString, "PIM") == 0) {
-			uint16_t pressure = 0x00FF;
 
-			UART_push_out_len((char *)&pressure, 2);
-			UART_push_out("\r\n");
+			while(UART_push_out_len((char *)&internalPressure, 3) == -2);
+			while(UART_push_out("\r\n") == -2);
 		}
 
 		// PIH command
 		else if(strcmp(commandString, "PIH") == 0) {
-			char *pressure = "12.34";
 
-			UART_push_out(pressure);
-			UART_push_out("\r\n");
+			char outputString[PIH_OUTPUT_LENGTH + 1] = {};
+			uint_to_ASCII_with_decimal(outputString, internalPressure, 2, 6);
+
+			while(UART_push_out(outputString) == -2);
+			while(UART_push_out("\r\n") == -2);
 		}
 
 		//MSA Command
