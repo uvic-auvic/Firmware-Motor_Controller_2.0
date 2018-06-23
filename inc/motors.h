@@ -19,7 +19,7 @@ typedef enum direction {
 
 extern void init_motors();
 
-extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t dir);
+extern void motor_set_speed_percent(motors_t motor_x, uint16_t speed, direction_t dir);
 
 extern int16_t motor_get_rpm(motors_t motor_x);
 

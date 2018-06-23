@@ -4,8 +4,8 @@
 #include<string.h>
 #include "stm32f4xx.h"
 
-#define MAX_BUFFER_DATA (32)
-#define MAX_BUFFER_SIZE (8)
+#define MAX_BUFFER_DATA (36)
+#define MAX_BUFFER_SIZE (4)
 
 typedef struct Buffer{
 	char data[MAX_BUFFER_SIZE][MAX_BUFFER_DATA];

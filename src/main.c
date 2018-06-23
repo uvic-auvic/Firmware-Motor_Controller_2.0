@@ -26,6 +26,7 @@ void blinkyTask(void *dummy){
 		GPIOA->ODR ^= GPIO_Pin_5;
 		/* Toggle at 1 HZ */
 		vTaskDelay(500);
+
 	}
 }
 
