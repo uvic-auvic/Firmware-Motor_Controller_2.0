@@ -53,7 +53,7 @@ int main(void)
 
 	init_LED();
 	init_motors();
-	init_I2C_Sensors();
+	//init_I2C_Sensors();
 	init_ADC();
 	FSM_Init();
 
