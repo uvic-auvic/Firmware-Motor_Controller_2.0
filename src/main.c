@@ -17,6 +17,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "ADC.h"
+#include "I2C_Sensors.h"
 #include "stdlib.h"
 
 void blinkyTask(void *dummy){
@@ -52,8 +53,10 @@ int main(void)
 
 	init_LED();
 	init_motors();
-	FSM_Init();
+	//init_I2C_Sensors();
 	init_ADC();
+	FSM_Init();
+
 	vGeneralTaskInit();
 	vTaskStartScheduler();
 
