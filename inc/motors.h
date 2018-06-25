@@ -21,6 +21,8 @@ extern void init_motors();
 
 extern void motor_set_speed_percent(motors_t motor_x, uint16_t speed, direction_t dir);
 
+extern void set_PWM(motors_t motor_x, uint16_t percent);
+
 extern int16_t motor_get_rpm(motors_t motor_x);
 
 extern void stop_all_motors();

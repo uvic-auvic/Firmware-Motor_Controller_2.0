@@ -31,8 +31,8 @@
 #define PW_MOTOR_NUMBER_LOCATION	0x02
 #define PW_MOTOR_NUMBER_LENTGH		1
 #define PW_ARGUMENT_LOCATION		0x03
-#define PW_ARGUMENT_LENGTH			2
-#define PW_COMMAND_LENGTH			5
+#define PW_ARGUMENT_LENGTH			3
+#define PW_COMMAND_LENGTH			6
 
 // Stop Motor(SM) Command
 #define SM_MOTOR_NUMBER_LOCATION	0x02
@@ -216,7 +216,7 @@ extern void FSM(void *dummy){
 		else if(strncmp(commandString, "PW", 2) == 0 && strlen(commandString) == PW_COMMAND_LENGTH){
 
 			int8_t motorNumber = asciiToInt(commandString + PW_MOTOR_NUMBER_LOCATION, PW_MOTOR_NUMBER_LENTGH);
-			int8_t argument = asciiToInt(commandString + PW_ARGUMENT_LOCATION, PW_ARGUMENT_LENGTH);
+			int16_t argument = asciiToInt(commandString + PW_ARGUMENT_LOCATION, PW_ARGUMENT_LENGTH);
 
 			if (motorNumber < 1 || motorNumber > NUMBER_OF_MOTORS) {
 				// send out error: "Invalid motor number"
@@ -227,7 +227,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
-				//Motor_PWM(motorNumber, (argument)* (10000 / 255));
+				set_PWM(motorNumber, argument);
 
 			}
 		}
