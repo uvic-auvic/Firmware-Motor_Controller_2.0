@@ -14,7 +14,10 @@
 #define INTERNAL_OSC_CALIB	1 // In case we decide to adjust for the manufacturing error in the internal clock
 
 //PWM Out Defines
-#define NEUTRAL		(3600)
+#define NEUTRAL				(3600)
+#define PWM_OUT_PRESCALER	(42 - 1)
+#define PWM_OUT_PERIOD		(40000 - 1)
+
 
 /* Global Variables
  * ----------------------------------------------------------
@@ -83,8 +86,8 @@ static void init_motor_pwm_out()
 
 	//timer set up
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-	TIM_TimeBaseStructure.TIM_Period = (40000 - 1);
-	TIM_TimeBaseStructure.TIM_Prescaler = (42 - 1);
+	TIM_TimeBaseStructure.TIM_Period = PWM_OUT_PERIOD;
+	TIM_TimeBaseStructure.TIM_Prescaler = PWM_OUT_PRESCALER;
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
@@ -424,6 +427,42 @@ extern void motor_set_speed_percent(motors_t motor_x, uint16_t speed, direction_
 			break;
 	}
 
+}
+
+/**
+ * Sets the PWM out to the desired value
+ * param: percent: PWM duty cycle in 10^-1 percent
+ */
+extern void set_PWM(motors_t motor_x, uint16_t percent) {
+
+	uint32_t cc_value = ((percent * (PWM_OUT_PERIOD + 1)) / 1000);
+
+	switch(motor_x){
+		case Motor1:
+			TIM_SetCompare1(TIM2, cc_value);
+			break;
+		case Motor2:
+			TIM_SetCompare4(TIM2, cc_value);
+			break;
+		case Motor3:
+			TIM_SetCompare3(TIM1, cc_value);
+			break;
+		case Motor4:
+			TIM_SetCompare1(TIM1, cc_value);
+			break;
+		case Motor5:
+			TIM_SetCompare4(TIM4, cc_value);
+			break;
+		case Motor6:
+			TIM_SetCompare1(TIM4, cc_value);
+			break;
+		case Motor7:
+			TIM_SetCompare1(TIM3, cc_value);
+			break;
+		case Motor8:
+			TIM_SetCompare3(TIM3, cc_value);
+			break;
+	}
 }
 
 /* Poorna's section.
