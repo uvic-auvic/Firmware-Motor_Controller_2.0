@@ -8,11 +8,21 @@
 #ifndef I2C_H_
 #define I2C_H_
 
+#include "stm32f4xx.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+
 typedef enum{
 	read,
 	write,
 	nothing
 } I2C_state_t;
+
+extern SemaphoreHandle_t I2C_mutex;
+
+extern uint16_t switch_endiness_uint16(uint16_t input);
+
+extern uint32_t switch_endiness_uint32(uint32_t input, uint8_t numBytes);
 
 extern void I2C_setup();
 

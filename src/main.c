@@ -16,6 +16,9 @@
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "I2C.h"
+#include "semphr.h"
+#include "I2C_Sensors.h"
 
 void blinkyTask(void *dummy){
 	while(1){
@@ -52,6 +55,7 @@ int main(void)
 	init_motors();
 	FSM_Init();
 	vGeneralTaskInit();
+	init_I2C_Sensors();
 	vTaskStartScheduler();
 
 	//Should never get here
