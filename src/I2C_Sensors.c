@@ -24,17 +24,16 @@ static void update_I2C_Sensors(void *dummy) {
 	//Init function for I2C sensors will go here.
 	//Temperature sensor and INA226 Current sensor will have one
     init_INA226_Current_Sensor();
-    init_internal_presure_sensor();
+    //init_internal_presure_sensor();
 
 	while(1) {
 		//Update functions for I2C sensors will go here.
 		//All I2C sensors should have one
 		supply_current = update_system_current();
-		internalPressure = Update_Internal_Pressure();
-		humidity = Update_Humidity();
-		temperature = Update_Temperature();
-		vTaskDelay(1000);
-
+		//internalPressure = Update_Internal_Pressure();
+		//humidity = Update_Humidity();
+		//temperature = Update_Temperature();
+		//vTaskDelay(1000);
 	}
 
 }

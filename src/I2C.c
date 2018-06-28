@@ -47,6 +47,8 @@ I2C_state_t I2C_state;
 //FreeRTOS current task handle
 TaskHandle_t TaskToNotify = NULL;
 
+
+
 extern uint16_t switch_endiness_uint16(uint16_t input) {
 	uint8_t temp = (input & 0xFF00) >> 8;
 	input = (input & 0x00FF) << 8;
@@ -150,6 +152,8 @@ void I2C1_EV_IRQHandler(void) {
 			I2C1->DR &= ~(I2C_READ_BIT);
 		} else if(I2C_state == read){
 			I2C1->DR |= (slave_address << I2C_SADD_BIT) | I2C_READ_BIT;
+			I2C1->CR1 |= I2C_CR1_POS;
+			I2C1->CR1 &= ~(I2C_CR1_ACK);
 		}
 	//Waits for address sent bit
 	}else if((I2C1->SR1 & I2C_SR1_ADDR) == I2C_SR1_ADDR){
@@ -162,11 +166,7 @@ void I2C1_EV_IRQHandler(void) {
 		} else if(I2C_state == read){
 			//the following is the read process specified by the F4 reference
 			//manual page 482-483
-			I2C1->CR1 |= I2C_CR1_POS;
 			I2C1->SR2;
-			if(bytes_total == 1){
-				I2C1->CR1 &= ~(I2C_CR1_ACK);
-			}
 		}
 	//Writes data to I2C
 	}else if( ((I2C1->SR1 & I2C_SR1_TXE) == I2C_SR1_TXE) && ((I2C1->SR1 & I2C_SR1_BTF) == I2C_SR1_BTF)){
@@ -194,14 +194,21 @@ void I2C1_EV_IRQHandler(void) {
 			I2C1->CR1 |= I2C_CR1_STOP;
 			I2C_inputBuffer++;
 			bytes_total--;
-
-		}else{
 			*I2C_inputBuffer = I2C1->DR;
 			I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
 			I2C1->CR1 |= I2C_CR1_ACK;
 			I2C_Cmd(I2C1, DISABLE);
 			I2C_DeInit(I2C1);
 			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
+		} else if(bytes_total == 1){
+			I2C1->CR1 |= I2C_CR1_STOP;
+			*I2C_inputBuffer = I2C1->DR;
+			I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
+			I2C1->CR1 |= I2C_CR1_ACK;
+			I2C_Cmd(I2C1, DISABLE);
+			I2C_DeInit(I2C1);
+			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
+
 		}
 	//Runs in the case of failure
 	} else if((I2C1->SR1 & I2C_SR1_AF) == I2C_SR1_AF){
