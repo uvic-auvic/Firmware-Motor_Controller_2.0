@@ -29,11 +29,12 @@ static void update_I2C_Sensors(void *dummy) {
 	while(1) {
 		//Update functions for I2C sensors will go here.
 		//All I2C sensors should have one
-		//supply_current = update_system_current();
+		supply_current = update_system_current();
 		/*internalPressure = Update_Internal_Pressure();
 		humidity = Update_Humidity();
 		temperature = Update_Temperature(); */
 		vTaskDelay(1000);
+
 	}
 
 }

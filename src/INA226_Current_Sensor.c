@@ -23,11 +23,11 @@
 
 //INA226 Slave address
 #define MOTOR_SENSOR_I2C_ADDRESS	0b01001111 //0x4F
-#define SYSTEM_SENSOR_I2C_ADDRESS	0b1000101 //0x4A
+#define SYSTEM_SENSOR_I2C_ADDRESS	0b01000101 //0x5
 
 //Calibration register value
-#define CALIB_REG_VALUE_HIGH_BYTE	0x10 //4mA per bit
-#define CALIB_REG_VALUE_LOW_BYTE	0xAA //4mA per bit
+#define CALIB_REG_VALUE_HIGH_BYTE	0x0A //4mA per bit
+#define CALIB_REG_VALUE_LOW_BYTE	0x00 //4mA per bit
 
 //Correction to take into account trace resistance
 #define SYSTEM_CURRENT_CALC_CORRECTION	1 //Needs to be calibrated

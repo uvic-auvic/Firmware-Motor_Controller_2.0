@@ -12,12 +12,6 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 
-typedef enum{
-	read,
-	write,
-	nothing
-} I2C_state_t;
-
 extern SemaphoreHandle_t I2C_mutex;
 
 extern uint16_t switch_endiness_uint16(uint16_t input);

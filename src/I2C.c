@@ -24,6 +24,11 @@
 #define I2C_OUTPUT_BUFFER_SIZE	8
 uint8_t I2C_OutputBuffer[I2C_OUTPUT_BUFFER_SIZE];
 
+typedef enum{
+	read,
+	write
+} I2C_state_t;
+
 //I2C Input Buffer
 uint8_t *I2C_inputBuffer;
 
@@ -33,7 +38,11 @@ volatile uint8_t bytes_count = 0;
 //bytes total
 volatile uint8_t bytes_total;
 
-volatile I2C_state_t I2C_state = nothing;
+//slave address
+uint8_t slave_address;
+
+//I2C state
+I2C_state_t I2C_state;
 
 //FreeRTOS current task handle
 TaskHandle_t TaskToNotify = NULL;
@@ -93,8 +102,6 @@ extern void I2C_setup(){
 	NVIC_SetPriority(I2C1_EV_IRQn, 7); /* (3) */
 	NVIC_EnableIRQ(I2C1_EV_IRQn); /* (4) */
 
-	//Initialize I2C mutex
-	//I2C_mutex = xSemaphoreCreateMutex();
 }
 
 static void I2C_init(){
@@ -113,43 +120,46 @@ static void I2C_init(){
 
 	//Enable I2C
 	I2C1->CR1 |= I2C_CR1_PE;
+
+	//Enable interrupts
+	I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN;
 }
 
-extern void I2C_read(uint8_t slave_address, uint8_t numBytes, uint8_t *message){
+extern void I2C_read(uint8_t address, uint8_t numBytes, uint8_t *message){
 	TaskToNotify = xTaskGetCurrentTaskHandle();
-	//while(I2C_state != nothing);
 	I2C_init();
+	slave_address = address;
 	I2C_state = read;
 	bytes_total = numBytes;
 	I2C_inputBuffer = message;
 	I2C1->CR1 |= I2C_CR1_START;
-	while((I2C1->SR1 & I2C_SR1_SB) != I2C_SR1_SB);
-	I2C1->DR |= (slave_address << I2C_SADD_BIT) | I2C_READ_BIT;
-	I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN;
 }
 
-extern void I2C_write(uint8_t slave_address, uint8_t numBytes, uint8_t message[]){
+extern void I2C_write(uint8_t address, uint8_t numBytes, uint8_t message[]){
 	TaskToNotify = xTaskGetCurrentTaskHandle();
-	//while(I2C_state != nothing);
 	I2C_init();
 	I2C_state = write;
+	slave_address = address;
 	bytes_total = numBytes;
 	memcpy(I2C_OutputBuffer, message, numBytes);
 	I2C1->CR1 |= I2C_CR1_START;
-	while((I2C1->SR1 & I2C_SR1_SB) != I2C_SR1_SB);
-	I2C1->DR |= (slave_address << I2C_SADD_BIT);
-	I2C1->DR &= ~(I2C_READ_BIT);
-	I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN;
 }
 
 void I2C1_EV_IRQHandler(void) {
+	//Waits for start bit
+	if((I2C1->SR1 & I2C_SR1_SB) == I2C_SR1_SB){
+		if(I2C_state == write){
+			I2C1->DR |= (slave_address << I2C_SADD_BIT);
+			I2C1->DR &= ~(I2C_READ_BIT);
+		} else if(I2C_state == read){
+			I2C1->DR |= (slave_address << I2C_SADD_BIT) | I2C_READ_BIT;
+		}
 	//Waits for address sent bit
-	if((I2C1->SR1 & I2C_SR1_ADDR) == I2C_SR1_ADDR){
+	}else if((I2C1->SR1 & I2C_SR1_ADDR) == I2C_SR1_ADDR){
 		if(I2C_state == write){
 			//needs to read SR2 to clear ADDR bit and continue
 			I2C1->SR2;
 			I2C1->DR = I2C_OutputBuffer[bytes_count];
-			UART_push_out("Sent_ADDR\r\n");
 			bytes_count++;
 			bytes_total--;
 		} else if(I2C_state == read){
@@ -157,79 +167,53 @@ void I2C1_EV_IRQHandler(void) {
 			//manual page 482-483
 			I2C1->CR1 |= I2C_CR1_POS;
 			I2C1->SR2;
+			if(bytes_total == 1){
+				I2C1->CR1 &= ~(I2C_CR1_ACK);
+			}
 		}
 	//Writes data to I2C
 	}else if( ((I2C1->SR1 & I2C_SR1_TXE) == I2C_SR1_TXE) && ((I2C1->SR1 & I2C_SR1_BTF) == I2C_SR1_BTF)){
 		if(bytes_total >= 1){
 			I2C1->DR = I2C_OutputBuffer[bytes_count];
-			UART_push_out("Sent_TXE\r\n");
-			char bytes_total_char[1] = {};
-			itoa(bytes_total, bytes_total_char, 10);
-			char UART_push[10] = {'W', 'R', 'I', 'T', 'E', ' ', bytes_total_char[0], '\r', '\n'};
-			UART_push_out(UART_push);
 			bytes_total--;
 			bytes_count++;
-		}else{
-			//itoa(bytes_count, tempChar, 10);
-			//UART_push_out(tempChar);
-			char bytes_total_char[1] = {};
-			itoa(bytes_total, bytes_total_char, 10);
-			char UART_push[10] = {'W', 'R', 'O', 'N', 'G', ' ', bytes_total_char[0], '\r', '\n'};
-			UART_push_out(UART_push);
+		}else if(bytes_total == 0){
 			bytes_count = 0;
 			I2C1->CR1 |= I2C_CR1_STOP;
 			I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
 			I2C_Cmd(I2C1, DISABLE);
 			I2C_DeInit(I2C1);
-			I2C_state = nothing;
 			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
 		}
 	//Reads I2C data
-	}else if( ((I2C1->SR1 & I2C_SR1_RXNE) == I2C_SR1_RXNE) && ((I2C1->SR1 & I2C_SR1_BTF) == I2C_SR1_BTF)){
-		if(bytes_total > 1){
+	}else if( ((I2C1->SR1 & I2C_SR1_RXNE) == I2C_SR1_RXNE) && ((I2C1->SR1 & I2C_SR1_BTF) == I2C_SR1_BTF) ){
+		if(bytes_total > 2){
 			*I2C_inputBuffer = I2C1->DR;
-			char bytes_total_char[1] = {};
-			itoa(bytes_total, bytes_total_char, 10);
-			char UART_push[8] = {'R', 'E', 'A', 'D', bytes_total, '\r', '\n'};
-			UART_push_out(UART_push);
 			I2C_inputBuffer++;
 			bytes_total--;
-		} else if(bytes_total == 1){
+		} else if(bytes_total == 2){
 			I2C1->CR1 &= ~(I2C_CR1_ACK);
-			I2C1->CR1 |= I2C_CR1_STOP;
 			*I2C_inputBuffer = I2C1->DR;
-			bytes_total--;
-		} else{
-			I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
-			I2C1->CR1 |= I2C_CR1_ACK;
-			I2C1->CR1 &= ~(I2C_CR1_POS);
-			char bytes_total_char[1] = {};
-			itoa(bytes_total, bytes_total_char, 10);
-			char UART_push[10] = {'R', 'E', 'A', 'D', '!', ' ', bytes_total_char[0], '\r', '\n'};
-			UART_push_out(UART_push);
-			I2C_Cmd(I2C1, DISABLE);
-			I2C_DeInit(I2C1);
-			I2C_state = nothing;
-			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
-		}
-	} else{
-		if(I2C_state == write){
-			bytes_count = 0;
 			I2C1->CR1 |= I2C_CR1_STOP;
-			I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
-			I2C_Cmd(I2C1, DISABLE);
-			I2C_DeInit(I2C1);
-			I2C_state = nothing;
-			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
-		} else if(I2C_state == read){
+			I2C_inputBuffer++;
+			bytes_total--;
+
+		}else{
+			*I2C_inputBuffer = I2C1->DR;
 			I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
 			I2C1->CR1 |= I2C_CR1_ACK;
-			I2C1->CR1 &= ~(I2C_CR1_POS);
 			I2C_Cmd(I2C1, DISABLE);
 			I2C_DeInit(I2C1);
-			I2C_state = nothing;
 			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
 		}
+	//Runs in the case of failure
+	} else if((I2C1->SR1 & I2C_SR1_AF) == I2C_SR1_AF){
+		bytes_count = 0;
+		I2C1->CR1 |= I2C_CR1_STOP;
+		I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
+		I2C_Cmd(I2C1, DISABLE);
+		I2C_DeInit(I2C1);
+		vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
 	}
 }
 
