@@ -47,9 +47,6 @@ I2C_state_t I2C_state;
 //FreeRTOS current task handle
 TaskHandle_t TaskToNotify = NULL;
 
-//FreeRTOS mutex
-SemaphoreHandle_t I2C_mutex;
-
 extern uint16_t switch_endiness_uint16(uint16_t input) {
 	uint8_t temp = (input & 0xFF00) >> 8;
 	input = (input & 0x00FF) << 8;

@@ -33,8 +33,6 @@ uint16_t promRegister[6] = {};
 
 extern uint32_t Update_Internal_Pressure() {
 
-	if (xSemaphoreTake(I2C_mutex, I2C_TIMEOUT) == pdTRUE) {
-
 			//Start Pressure Conversion on the sensor
 			uint8_t temp_cmd_var = PRESSURE_CONVERT_4096_CMD;
 			I2C_write(SENSOR_ADDRESS , 1, &temp_cmd_var);
@@ -69,8 +67,6 @@ extern uint32_t Update_Internal_Pressure() {
 			I2C_read(SENSOR_ADDRESS, 3, (uint8_t *)&temperature);
 			ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-			xSemaphoreGive(I2C_mutex);
-
 			internalPressure = switch_endiness_uint32(internalPressure, 3);
 			temperature = switch_endiness_uint32(temperature, 3);
 
@@ -81,14 +77,9 @@ extern uint32_t Update_Internal_Pressure() {
 			internalPressure = (double)(((int64_t)internalPressure * (double)sens/2097152) - off)/(32768);
 
 			return internalPressure; //returns relative humidity %
-		} else {
-			return 0xFFFF;
-		}
 }
 
 extern void init_internal_presure_sensor() {
-
-	if(xSemaphoreTake(I2C_mutex, I2C_TIMEOUT) == pdTRUE) {
 
 		for(uint8_t i = 0; i < 6; i++) {
 
@@ -100,9 +91,6 @@ extern void init_internal_presure_sensor() {
 			I2C_read(SENSOR_ADDRESS, 2, (uint8_t *)&promRegister[i]);
 			ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(I2C_TIMEOUT));
 			promRegister[i] = switch_endiness_uint16(promRegister[i]);
-		}
-
-		xSemaphoreGive(I2C_mutex);
 	}
 
 }

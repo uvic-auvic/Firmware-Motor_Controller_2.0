@@ -22,8 +22,6 @@
 
 //Take the relative humidity and return it as a percentage
 extern uint16_t Update_Humidity() {
-	if (xSemaphoreTake(I2C_mutex, I2C_TIMEOUT)== pdTRUE) {
-
 		uint8_t humidityAddress = CMD_MEASURE_RH_HM;
 
 		I2C_write(Si_Address , 1, &humidityAddress);
@@ -34,20 +32,13 @@ extern uint16_t Update_Humidity() {
 		I2C_read(Si_Address, 2, (uint8_t *)&relativeHumidity);
 		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		xSemaphoreGive(I2C_mutex);
-
 		relativeHumidity = switch_endiness_uint16(relativeHumidity);
 		relativeHumidity = ((125*relativeHumidity)/65536)-6;
 
 		return relativeHumidity; //returns relative humidity %
-	} else {
-		return 0xFFFF;
-	  }
 }
 // take the temperature in Kelvins and return it as 10*(actual temperature)
 extern uint16_t Update_Temperature() {
-
-	if (xSemaphoreTake(I2C_mutex, I2C_TIMEOUT)== pdTRUE) {
 
 		uint8_t tempAddress = CMD_MEASURE_TEMP_HM;
 
@@ -59,13 +50,8 @@ extern uint16_t Update_Temperature() {
 		I2C_read(Si_Address, 2, (uint8_t *)&temperature);
 		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		xSemaphoreGive(I2C_mutex);
-
 		temperature = switch_endiness_uint16(temperature);
 		temperature = ((1757.2*temperature)/65536)+2263;
 
 		return temperature; //returns 10*temperature in Kelvins
-	} else {
-		return 0xFFFF;
-	  }
 }
