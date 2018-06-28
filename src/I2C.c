@@ -152,8 +152,13 @@ void I2C1_EV_IRQHandler(void) {
 			I2C1->DR &= ~(I2C_READ_BIT);
 		} else if(I2C_state == read){
 			I2C1->DR |= (slave_address << I2C_SADD_BIT) | I2C_READ_BIT;
-			I2C1->CR1 |= I2C_CR1_POS;
-			I2C1->CR1 &= ~(I2C_CR1_ACK);
+			if( bytes_total == 2 ){
+				I2C1->CR1 |= I2C_CR1_POS;
+				I2C1->CR1 &= ~(I2C_CR1_ACK);
+			}else if( bytes_total == 1 ){
+				I2C1->CR1 &= ~(I2C_CR1_ACK);
+			}
+			I2C1->SR2;
 		}
 	//Waits for address sent bit
 	}else if((I2C1->SR1 & I2C_SR1_ADDR) == I2C_SR1_ADDR){
@@ -166,6 +171,9 @@ void I2C1_EV_IRQHandler(void) {
 		} else if(I2C_state == read){
 			//the following is the read process specified by the F4 reference
 			//manual page 482-483
+			if( bytes_total == 1 ){
+				I2C1->CR1 &= ~(I2C_CR1_ACK);
+			}
 			I2C1->SR2;
 		}
 	//Writes data to I2C
@@ -188,8 +196,11 @@ void I2C1_EV_IRQHandler(void) {
 			*I2C_inputBuffer = I2C1->DR;
 			I2C_inputBuffer++;
 			bytes_total--;
+			if(bytes_total == 2){
+				I2C1->CR1 &= ~(I2C_CR1_ACK);
+				I2C1->CR1 |= I2C_CR1_POS;
+			}
 		} else if(bytes_total == 2){
-			I2C1->CR1 &= ~(I2C_CR1_ACK);
 			*I2C_inputBuffer = I2C1->DR;
 			I2C1->CR1 |= I2C_CR1_STOP;
 			I2C_inputBuffer++;
@@ -208,7 +219,6 @@ void I2C1_EV_IRQHandler(void) {
 			I2C_Cmd(I2C1, DISABLE);
 			I2C_DeInit(I2C1);
 			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
-
 		}
 	//Runs in the case of failure
 	} else if((I2C1->SR1 & I2C_SR1_AF) == I2C_SR1_AF){

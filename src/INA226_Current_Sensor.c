@@ -61,7 +61,7 @@ extern uint32_t update_system_current() {
 		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
 		current = switch_endiness_uint16(current);
-		//current = TO_CURRENT(current) * (SYSTEM_CURRENT_CALC_CORRECTION);
+		current = TO_CURRENT(current) * (SYSTEM_CURRENT_CALC_CORRECTION);
 
 		return current;
 
