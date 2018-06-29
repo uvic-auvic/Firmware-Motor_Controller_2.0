@@ -17,7 +17,7 @@
 uint32_t supply_current = 0;
 uint16_t temperature = 0;
 uint16_t humidity = 0;
-uint32_t internalPressure = 123456;
+uint32_t internalPressure = 0;
 
 static void update_I2C_Sensors(void *dummy) {
 
@@ -31,8 +31,8 @@ static void update_I2C_Sensors(void *dummy) {
 		//All I2C sensors should have one
 		supply_current = update_system_current();
 		internalPressure = Update_Internal_Pressure();
-		//humidity = Update_Humidity();
-		//temperature = Update_Temperature();
+		humidity = Update_Humidity();
+		temperature = Update_Temperature_From_Last_Reading();
 		vTaskDelay(1000);
 	}
 }
