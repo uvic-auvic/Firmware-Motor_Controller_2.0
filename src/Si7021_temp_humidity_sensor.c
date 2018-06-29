@@ -33,12 +33,12 @@ extern uint16_t Update_Humidity() {
 
 		uint16_t relativeHumidity = 0;
 
-//		I2C_read(Si_Address, 2, (uint8_t *)&relativeHumidity);
-//		if (ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT) == 0) {
-//			debug_write("I2C_TIMEOUT\r\n");
-//		} else {
-//			debug_write("WRITE_SUCESS\r\n");
-//		}
+		I2C_read(Si_Address, 2, (uint8_t *)&relativeHumidity);
+		if (ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT) == 0) {
+			debug_write("I2C_TIMEOUT\r\n");
+		} else {
+			debug_write("WRITE_SUCESS\r\n");
+		}
 
 		char temp[6] = {};
 		itoa(relativeHumidity, temp, 10);

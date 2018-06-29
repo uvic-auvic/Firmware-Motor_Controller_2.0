@@ -19,6 +19,7 @@
 #include "I2C.h"
 #include "semphr.h"
 #include "I2C_Sensors.h"
+#include "simple_UART.h"
 
 void blinkyTask(void *dummy){
 	while(1){
