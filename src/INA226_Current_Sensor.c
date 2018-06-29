@@ -66,7 +66,7 @@ extern uint32_t update_system_current() {
 }
 
 extern uint16_t get_system_bus_voltage() {
-	if(xSemaphoreTake(I2C_mutex, I2C_TIMEOUT)) {
+
 		uint8_t voltageReg = BUS_VOLTAGE_REG_ADDRESS;
 
 		I2C_write(SYSTEM_SENSOR_I2C_ADDRESS, 1, &voltageReg);
@@ -77,21 +77,15 @@ extern uint16_t get_system_bus_voltage() {
 		I2C_read(SYSTEM_SENSOR_I2C_ADDRESS, 2, (uint8_t *)&voltage);
 		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		xSemaphoreGive(I2C_mutex);
-
 		voltage = switch_endiness_uint16(voltage);
 		voltage = TO_VOLTAGE(voltage);
 
 		return voltage;
-	} else {
-		return 0xFFFF;
-	}
 
 }
 
 extern uint16_t get_system_shunt_voltage() {
 
-	if(xSemaphoreTake(I2C_mutex, I2C_TIMEOUT)) {
 		uint8_t shuntVoltageReg = SHUNT_VOLTAGE_REG_ADDRESS;
 
 		I2C_write(SYSTEM_SENSOR_I2C_ADDRESS, 1, &shuntVoltageReg);
@@ -102,14 +96,9 @@ extern uint16_t get_system_shunt_voltage() {
 		I2C_read(SYSTEM_SENSOR_I2C_ADDRESS, 2, (uint8_t *)&shuntVoltage);
 		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		xSemaphoreGive(I2C_mutex);
-
 		shuntVoltage = switch_endiness_uint16(shuntVoltage);
 		shuntVoltage = TO_SHUNT_VOLTAGE(shuntVoltage) * (SYSTEM_CURRENT_CALC_CORRECTION);
 
 		return shuntVoltage;
-	} else {
-		return 0xFFFF;
-	}
 
 }
