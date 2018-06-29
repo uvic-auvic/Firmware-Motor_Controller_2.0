@@ -3,6 +3,7 @@
 #include "task.h"
 #include "I2C.h"
 #include "semphr.h"
+#include "debug.h"
 
 //Time out
 #define I2C_TIMEOUT                  2000
@@ -15,7 +16,6 @@
 #define CMD_READ_TEMP_PREV_RH        0xE0
 #define CMD_RESET                    0xFE
 
-
 //Si7021 I2C slave addresses
 #define Si_Address                   0b1000000
 
@@ -25,12 +25,24 @@ extern uint16_t Update_Humidity() {
 		uint8_t humidityAddress = CMD_MEASURE_RH_HM;
 
 		I2C_write(Si_Address , 1, &humidityAddress);
-		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
+		if (ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT) == 0) {
+			debug_write("I2C_TIMEOUT\n");
+		} else {
+			debug_write("WRITE_SUCESS\n");
+		}
 
 		uint16_t relativeHumidity = 0;
 
-		I2C_read(Si_Address, 2, (uint8_t *)&relativeHumidity);
-		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
+//		I2C_read(Si_Address, 2, (uint8_t *)&relativeHumidity);
+//		if (ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT) == 0) {
+//			debug_write("I2C_TIMEOUT\r\n");
+//		} else {
+//			debug_write("WRITE_SUCESS\r\n");
+//		}
+
+		char temp[6] = {};
+		itoa(relativeHumidity, temp, 10);
+		UART_push_out(temp);
 
 		relativeHumidity = switch_endiness_uint16(relativeHumidity);
 		relativeHumidity = ((125*relativeHumidity)/65536)-6;

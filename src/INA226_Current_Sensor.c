@@ -22,7 +22,6 @@
 #define SHUNT_VOLTAGE_REG_ADDRESS	0x01
 
 //INA226 Slave address
-#define MOTOR_SENSOR_I2C_ADDRESS	0b01001111 //0x4F
 #define SYSTEM_SENSOR_I2C_ADDRESS	0b01000101 //0x5
 
 //Calibration register value
@@ -31,7 +30,6 @@
 
 //Correction to take into account trace resistance
 #define SYSTEM_CURRENT_CALC_CORRECTION	1 //Needs to be calibrated
-#define MOTOR_CURRENT_CALC_CORRECTION	1 //Needs to be calibrated
 
 //Formulas to convert bits to actual values with units
 #define TO_CURRENT(x) ((x)*(4))
@@ -67,24 +65,6 @@ extern uint32_t update_system_current() {
 
 }
 
-extern uint32_t update_motor_current() {
-		uint8_t currentReg = CURRENT_REG_ADDRESS;
-
-		I2C_write(MOTOR_SENSOR_I2C_ADDRESS, 1, &currentReg);
-		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
-
-		uint32_t current = 0;
-
-		I2C_read(MOTOR_SENSOR_I2C_ADDRESS, 2, (uint8_t *)&current);
-		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
-
-		current = switch_endiness_uint16(current);
-		current = TO_CURRENT(current) * (MOTOR_CURRENT_CALC_CORRECTION);
-
-		return current;
-
-}
-
 extern uint16_t get_system_bus_voltage() {
 	if(xSemaphoreTake(I2C_mutex, I2C_TIMEOUT)) {
 		uint8_t voltageReg = BUS_VOLTAGE_REG_ADDRESS;
@@ -95,30 +75,6 @@ extern uint16_t get_system_bus_voltage() {
 		uint16_t voltage = 0;
 
 		I2C_read(SYSTEM_SENSOR_I2C_ADDRESS, 2, (uint8_t *)&voltage);
-		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
-
-		xSemaphoreGive(I2C_mutex);
-
-		voltage = switch_endiness_uint16(voltage);
-		voltage = TO_VOLTAGE(voltage);
-
-		return voltage;
-	} else {
-		return 0xFFFF;
-	}
-
-}
-
-extern uint16_t get_motor_bus_voltage() {
-	if(xSemaphoreTake(I2C_mutex, I2C_TIMEOUT)) {
-		uint8_t voltageReg = BUS_VOLTAGE_REG_ADDRESS;
-
-		I2C_write(MOTOR_SENSOR_I2C_ADDRESS, 1, &voltageReg);
-		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
-
-		uint16_t voltage = 0;
-
-		I2C_read(MOTOR_SENSOR_I2C_ADDRESS, 2, (uint8_t *)&voltage);
 		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
 		xSemaphoreGive(I2C_mutex);
@@ -150,30 +106,6 @@ extern uint16_t get_system_shunt_voltage() {
 
 		shuntVoltage = switch_endiness_uint16(shuntVoltage);
 		shuntVoltage = TO_SHUNT_VOLTAGE(shuntVoltage) * (SYSTEM_CURRENT_CALC_CORRECTION);
-
-		return shuntVoltage;
-	} else {
-		return 0xFFFF;
-	}
-
-}
-
-extern uint16_t get_motor_shunt_voltage() {
-	if(xSemaphoreTake(I2C_mutex, I2C_TIMEOUT)) {
-		uint8_t shuntVoltageReg = SHUNT_VOLTAGE_REG_ADDRESS;
-
-		I2C_write(MOTOR_SENSOR_I2C_ADDRESS, 1, &shuntVoltageReg);
-		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
-
-		uint16_t shuntVoltage = 0;
-
-		I2C_read(MOTOR_SENSOR_I2C_ADDRESS, 2, (uint8_t *)&shuntVoltage);
-		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
-
-		xSemaphoreGive(I2C_mutex);
-
-		shuntVoltage = switch_endiness_uint16(shuntVoltage);
-		shuntVoltage = TO_SHUNT_VOLTAGE(shuntVoltage) * (MOTOR_CURRENT_CALC_CORRECTION);
 
 		return shuntVoltage;
 	} else {
