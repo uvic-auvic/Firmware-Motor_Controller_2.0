@@ -33,58 +33,65 @@ uint16_t promRegister[6] = {};
 
 extern uint32_t Update_Internal_Pressure() {
 
-		//Start Pressure Conversion on the sensor
-		uint8_t temp_cmd_var = PRESSURE_CONVERT_4096_CMD;
-		I2C_write(SENSOR_ADDRESS , 1, &temp_cmd_var);
+			//Start Pressure Conversion on the sensor
+			uint8_t temp_cmd_var = PRESSURE_CONVERT_4096_CMD;
+			I2C_write(SENSOR_ADDRESS , 1, &temp_cmd_var);
+			ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		vTaskDelay(15);
+			vTaskDelay(15);
 
-		//Set read register on the sensor
-		temp_cmd_var = ADC_READ_REGISTER;
-		I2C_write(SENSOR_ADDRESS, 1, &temp_cmd_var);
+			//Set read register on the sensor
+			temp_cmd_var = ADC_READ_REGISTER;
+			I2C_write(SENSOR_ADDRESS, 1, &temp_cmd_var);
+			ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		//Read pressure value from sensor
-		uint32_t internalPressure = 0;
-		I2C_read(SENSOR_ADDRESS, 3, (uint8_t *)&internalPressure);
+			//Read pressure value from sensor
+			uint32_t internalPressure = 0;
+			I2C_read(SENSOR_ADDRESS, 3, (uint8_t *)&internalPressure);
+			ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		//Start Temperature Conversion on the sensor
-		temp_cmd_var = TEMPERATURE_CONVERT_4096_CMD;
-		I2C_write(SENSOR_ADDRESS , 1, &temp_cmd_var);
+			//Start Temperature Conversion on the sensor
+			temp_cmd_var = TEMPERATURE_CONVERT_4096_CMD;
+			I2C_write(SENSOR_ADDRESS , 1, &temp_cmd_var);
+			ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		vTaskDelay(15);
+			vTaskDelay(15);
 
-		//Set read register on the sensor
-		temp_cmd_var = ADC_READ_REGISTER;
-		I2C_write(SENSOR_ADDRESS, 1, &temp_cmd_var);
+			//Set read register on the sensor
+			temp_cmd_var = ADC_READ_REGISTER;
+			I2C_write(SENSOR_ADDRESS, 1, &temp_cmd_var);
+			ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		//Read temperature value from the sensors
-		uint32_t temperature = 0;
-		I2C_read(SENSOR_ADDRESS, 3, (uint8_t *)&temperature);
+			//Read temperature value from the sensors
+			uint32_t temperature = 0;
+			I2C_read(SENSOR_ADDRESS, 3, (uint8_t *)&temperature);
+			ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
-		internalPressure = switch_endiness_uint32(internalPressure, 3);
-		temperature = switch_endiness_uint32(temperature, 3);
+			internalPressure = switch_endiness_uint32(internalPressure, 3);
+			temperature = switch_endiness_uint32(temperature, 3);
 
-		// Do calculation to determine pressure
-		int32_t dT = temperature - (promRegister[4] * 256);
-		int64_t off = ((int64_t)promRegister[1] * 131072) + (double)((int64_t)promRegister[3] * dT)/(64);
-		int64_t sens = ((int64_t)promRegister[0] * 65536) + (double)((int64_t)promRegister[2] * dT)/(128);
-		internalPressure = (double)(((int64_t)internalPressure * (double)sens/2097152) - off)/(32768);
+			// Do calculation to determine pressure
+			int32_t dT = temperature - (promRegister[4] * 256);
+			int64_t off = ((int64_t)promRegister[1] * 131072) + (double)((int64_t)promRegister[3] * dT)/(64);
+			int64_t sens = ((int64_t)promRegister[0] * 65536) + (double)((int64_t)promRegister[2] * dT)/(128);
+			internalPressure = (double)(((int64_t)internalPressure * (double)sens/2097152) - off)/(32768);
 
-		return internalPressure;
+			return internalPressure; //returns relative humidity %
 
 }
 
 extern void init_internal_presure_sensor() {
 
-	for(uint8_t i = 0; i < 6; i++) {
+		for(uint8_t i = 0; i < 6; i++) {
 
-		uint8_t temp_cmd_var = PROM_C1_ADDRESS + (i*2);
+			uint8_t temp_cmd_var = PROM_C1_ADDRESS + (i*2);
 
-		I2C_write(SENSOR_ADDRESS, 1, &temp_cmd_var);
+			I2C_write(SENSOR_ADDRESS, 1, &temp_cmd_var);
+			ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(I2C_TIMEOUT));
 
-		I2C_read(SENSOR_ADDRESS, 2, (uint8_t *)&promRegister[i]);
-
-		promRegister[i] = switch_endiness_uint16(promRegister[i]);
+			I2C_read(SENSOR_ADDRESS, 2, (uint8_t *)&promRegister[i]);
+			ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(I2C_TIMEOUT));
+			promRegister[i] = switch_endiness_uint16(promRegister[i]);
 	}
 
 }
