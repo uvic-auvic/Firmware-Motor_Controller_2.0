@@ -154,10 +154,8 @@ void I2C1_EV_IRQHandler(void) {
 			uint8_t output = (slave_address << I2C_SADD_BIT);
 			output &= ~(I2C_READ_BIT);
 			I2C1->DR = output;
-			debug_write("WR_SB\n");
 		} else if(I2C_state == read){
 			I2C1->DR = (slave_address << I2C_SADD_BIT) | I2C_READ_BIT;
-			debug_write("R_SB\n");
 
 			if( bytes_total == 1 ){
 				I2C1->CR1 &= ~(I2C_CR1_ACK);
@@ -172,73 +170,43 @@ void I2C1_EV_IRQHandler(void) {
 		if(I2C_state == write){
 
 			I2C1->DR = I2C_OutputBuffer[bytes_count];
-			debug_write("W_ADDR\n");
 
 			bytes_count++;
 			bytes_total--;
 		} else if(I2C_state == read){
 			//the following is the read process specified by the F4 reference
 			//manual page 482-483
-			debug_write("R_ADDR\n");
 			if( bytes_total == 1 ){
 				I2C1->CR1 |= I2C_CR1_STOP;
 			}
 		}
 
 	//Writes data to I2C
-	}else if( ((I2C1->SR1 & I2C_SR1_TXE) == I2C_SR1_TXE) /* && ((I2C1->SR1 & I2C_SR1_BTF) == I2C_SR1_BTF)*/){
+	}else if((I2C1->SR1 & I2C_SR1_TXE) == I2C_SR1_TXE){
 		if(bytes_total >= 1){
 			I2C1->DR = I2C_OutputBuffer[bytes_count];
-			debug_write("W_TXE\n");
 			bytes_total--;
 			bytes_count++;
 		}else if(bytes_total == 0){
 			bytes_count = 0;
 			I2C1->CR1 |= I2C_CR1_STOP;
 			I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
-			//I2C_Cmd(I2C1, DISABLE);
-			//I2C_DeInit(I2C1);
-			debug_write("N_TXE\n");
 			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
 		}
 	//Reads I2C data
-	}else if( ((I2C1->SR1 & I2C_SR1_RXNE) == I2C_SR1_RXNE) /*&& ((I2C1->SR1 & I2C_SR1_BTF) == I2C_SR1_BTF) */){
+	}else if((I2C1->SR1 & I2C_SR1_RXNE) == I2C_SR1_RXNE){
 
 		*I2C_inputBuffer = I2C1->DR;
-		debug_write("R_RXNE_B2>\n");
 		I2C_inputBuffer++;
 		bytes_total--;
 
 		if(bytes_total == 1){
 			I2C1->CR1 &= ~(I2C_CR1_ACK);
 			I2C1->CR1 |= I2C_CR1_STOP;
-			//I2C1->CR1 |= I2C_CR1_POS;
 		}
 
-//		else if(bytes_total == 2){
-//			*I2C_inputBuffer = I2C1->DR;
-//			debug_write("READ_RXNE_B2\n");
-//			I2C1->CR1 |= I2C_CR1_STOP;
-//			I2C_inputBuffer++;
-//			bytes_total--;
-//			*I2C_inputBuffer = I2C1->DR;
-//			I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
-//			I2C1->CR1 |= I2C_CR1_ACK;
-//			I2C_Cmd(I2C1, DISABLE);
-//			I2C_DeInit(I2C1);
-//			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
-//		}
-
 		if(bytes_total == 0){
-			//I2C1->CR1 |= I2C_CR1_STOP;
-			//*I2C_inputBuffer = I2C1->DR;
-			debug_write("R_RXNE_B0\n");
 			I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
-
-			//I2C_Cmd(I2C1, DISABLE);
-			//I2C1->CR1 |= I2C_CR1_ACK;
-			//I2C_DeInit(I2C1);
-			debug_write("N_RXNE\n");
 			vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
 		}
 	//Runs in the case of failure
@@ -248,13 +216,9 @@ void I2C1_EV_IRQHandler(void) {
 		I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
 		I2C_Cmd(I2C1, DISABLE);
 		I2C_DeInit(I2C1);
-		debug_write("I2C_ERR\n");
 		vTaskNotifyGiveFromISR(TaskToNotify, pdFALSE);
 	}
 	uint32_t temp = I2C1->SR1;
 	temp = I2C1->SR2;
 
-	debug_write("I");
 }
-
-
