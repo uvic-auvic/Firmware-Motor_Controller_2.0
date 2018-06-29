@@ -5,6 +5,7 @@
 #include "semphr.h"
 #include "debug.h"
 
+
 //Time out
 #define I2C_TIMEOUT                  2000
 
@@ -22,6 +23,7 @@
 
 //Take the relative humidity and return it as a percentage
 extern uint16_t Update_Humidity() {
+  
 		uint8_t humidityAddress = CMD_MEASURE_RH_NM;
 
 		vTaskDelay(10);
@@ -40,10 +42,11 @@ extern uint16_t Update_Humidity() {
 		relativeHumidity = ((125*relativeHumidity)/65536)-6;
 
 		return relativeHumidity; //returns relative humidity %
+
 }
 // take the temperature in Kelvins and return it as 10*(actual temperature)
 extern uint16_t Update_Temperature() {
-
+  
 		vTaskDelay(10);
 		uint8_t tempAddress = CMD_MEASURE_TEMP_HM;
 

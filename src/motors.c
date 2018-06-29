@@ -4,6 +4,7 @@
 #define _100_MHZ	(100 * 1000 * 1000)
 #define _10_MHZ		(10 * 1000 * 1000)
 
+//PWM In Defines
 #define TIM5_PRESCALER	0
 #define PWM_IN_TIMER_FREQ	(_100_MHZ /(TIM5_PRESCALER + 1))
 #define NUMBER_OF_MOTORS	8
@@ -11,6 +12,12 @@
 #define PULSE_PER_ROTATION	7
 #define FREQ_TO_RPM_CONV	((float)60 / (PULSE_PER_ROTATION))
 #define INTERNAL_OSC_CALIB	1 // In case we decide to adjust for the manufacturing error in the internal clock
+
+//PWM Out Defines
+#define NEUTRAL				(3600)
+#define PWM_OUT_PRESCALER	(42 - 1)
+#define PWM_OUT_PERIOD		(40000 - 1)
+
 
 /* Global Variables
  * ----------------------------------------------------------
@@ -21,40 +28,11 @@ uint32_t pwmInTimestamp[NUMBER_OF_MOTORS][PWM_IN_ARRAY_LENGTH];
 /* Holds the direction of the motor. 0 = Forward, 0 = Reverse.
  * This will be updated when the PWM out for the motor is set */
 uint8_t motorDirection = 0b00000000;
-#define NEUTRAL		(900)
+
 
 /* Initialization functions
  * ----------------------------------------------------------
  */
-static void init_motor_current_temp_MUX() {
-	//Enable clock
-/*
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-
-	/*
-	//GPIOC Configuration
-	GPIO_InitTypeDef GPIOC_InitStruct;
-	GPIOC_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
-	GPIOC_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
-	GPIOC_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIOC_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIOC_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	//GPIO_Init(GPIOC, &GPIOC_InitStruct);
-	//*
-
-	/*
-	//GPIOD Configuration
-	GPIO_InitTypeDef GPIOD_InitStruct;
-	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
-	GPIOD_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
-	GPIOD_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	//GPIO_Init(GPIOD, &GPIOD_InitStruct);
-	//*/
-}
-
 
 static void init_motor_pwm_out()
 {
@@ -62,11 +40,13 @@ static void init_motor_pwm_out()
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
 	//init timers
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+
 	//GPIOA Configuration for motors 1-4 and 7
 	GPIO_InitTypeDef GPIOA_InitStruct;
 	GPIOA_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_3 | GPIO_Pin_10 | GPIO_Pin_8 | GPIO_Pin_6;
@@ -75,6 +55,7 @@ static void init_motor_pwm_out()
 	GPIOA_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIOA_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOA, &GPIOA_InitStruct);
+
 	//GPIOD configuration for motors 5-6
 	GPIO_InitTypeDef GPIOD_InitStruct;
 	GPIOD_InitStruct.GPIO_Pin = GPIO_Pin_15 | GPIO_Pin_12;
@@ -83,6 +64,7 @@ static void init_motor_pwm_out()
 	GPIOD_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIOD_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOD, &GPIOD_InitStruct);
+
 	//GPIOB configuration for motor 8
 	GPIO_InitTypeDef GPIOB_InitStruct;
 	GPIOB_InitStruct.GPIO_Pin = GPIO_Pin_0;
@@ -91,6 +73,7 @@ static void init_motor_pwm_out()
 	GPIOB_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIOB_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOB, &GPIOB_InitStruct);
+
 	//pin alternate function timer configuration
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource0, GPIO_AF_TIM2);
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_TIM2);
@@ -100,10 +83,11 @@ static void init_motor_pwm_out()
 	GPIO_PinAFConfig(GPIOD, GPIO_PinSource12, GPIO_AF_TIM4);
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource6, GPIO_AF_TIM3);
 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource0, GPIO_AF_TIM3);
+
 	//timer set up
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-	TIM_TimeBaseStructure.TIM_Period = (10000 - 1);
-	TIM_TimeBaseStructure.TIM_Prescaler = (167 -1);
+	TIM_TimeBaseStructure.TIM_Period = PWM_OUT_PERIOD;
+	TIM_TimeBaseStructure.TIM_Prescaler = PWM_OUT_PRESCALER;
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
@@ -111,6 +95,7 @@ static void init_motor_pwm_out()
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
 	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+
 	//pwm init
 	TIM_OCInitTypeDef TIM_OCInitStructure;
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
@@ -148,12 +133,12 @@ static void init_motor_pwm_out()
 	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
 	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Reset;
 
-	 //pwm config for channel 3 PA10 motor 3
-		TIM_OC3Init(TIM1, &TIM_OCInitStructure);
-		TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
-		//pwm config for channel 1 PA8 motor 4
-		TIM_OC1Init(TIM1, &TIM_OCInitStructure);
-		TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
+	//pwm config for channel 3 PA10 motor 3
+	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
+	TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
+	//pwm config for channel 1 PA8 motor 4
+	TIM_OC1Init(TIM1, &TIM_OCInitStructure);
+	TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
 
 
     TIM_Cmd(TIM2, ENABLE);
@@ -220,6 +205,7 @@ static void init_PWM_in_timer() {
 
 	//Timer will be enabled in another function which will be called last. This is to avoid conflicts.
 }
+
 
 static void init_PWM_in_GPIO() {
 
@@ -389,7 +375,6 @@ extern void stop_all_motors(){
 extern void init_motors() {
 	/* Initialize sub-modules */
 	init_motor_pwm_out();
-	init_motor_current_temp_MUX();
 
 	init_motor_speed_feedback();
 
@@ -406,9 +391,9 @@ extern void init_motors() {
 /* Put any static/hidden functions your code may need below here: */
 
 /* Robert's extern/visible functions go below here: */
-extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t dir)
+extern void motor_set_speed_percent(motors_t motor_x, uint16_t speed, direction_t dir)
 {
-	uint16_t cc_value = speed * 3;
+	uint16_t cc_value = (speed * 12)/10;
 	if(dir == Forward){
 		cc_value = NEUTRAL + cc_value;
 	}else{
@@ -442,6 +427,42 @@ extern void motor_set_speed_percent(motors_t motor_x, uint8_t speed, direction_t
 			break;
 	}
 
+}
+
+/**
+ * Sets the PWM out to the desired value
+ * param: percent: PWM duty cycle in 10^-1 percent
+ */
+extern void set_PWM(motors_t motor_x, uint16_t percent) {
+
+	uint32_t cc_value = ((percent * (PWM_OUT_PERIOD + 1)) / 1000);
+
+	switch(motor_x){
+		case Motor1:
+			TIM_SetCompare1(TIM2, cc_value);
+			break;
+		case Motor2:
+			TIM_SetCompare4(TIM2, cc_value);
+			break;
+		case Motor3:
+			TIM_SetCompare3(TIM1, cc_value);
+			break;
+		case Motor4:
+			TIM_SetCompare1(TIM1, cc_value);
+			break;
+		case Motor5:
+			TIM_SetCompare4(TIM4, cc_value);
+			break;
+		case Motor6:
+			TIM_SetCompare1(TIM4, cc_value);
+			break;
+		case Motor7:
+			TIM_SetCompare1(TIM3, cc_value);
+			break;
+		case Motor8:
+			TIM_SetCompare3(TIM3, cc_value);
+			break;
+	}
 }
 
 /* Poorna's section.
@@ -540,89 +561,4 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 	}
 
 	return rpm;
-}
-
-/* Code from Issue #8 (by Robert Keen).
- * Reading MUX'ed sensor data.
- * ----------------------------------------------------------
- */
-
-extern uint8_t get_motor_current(motor_sensors_t motor_sensor_x) {
-	switch (motor_sensor_x) {
-		case Motor_Curr_ADC1:
-			GPIOC->BSRRL &= ~(GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9); //turn off PC7-PC9
-			return 0;
-			break;
-		case Motor_Curr_ADC2:
-			GPIOC->BSRRL |= GPIO_Pin_7;	//turn on PC7
-			return 0;
-			break;
-		case Motor_Curr_ADC3:
-			GPIOC->BSRRL |= GPIO_Pin_8; //turn on PC8
-			return 0;
-			break;
-		case Motor_Curr_ADC4:
-			GPIOC->BSRRL |= GPIO_Pin_7 | GPIO_Pin_8; //turn on PC7-PC8
-			return 0;
-			break;
-		case Motor_Curr_ADC5:
-			GPIOC->BSRRL |= GPIO_Pin_9; //turn on PC9
-			return 0;
-			break;
-		case Motor_Curr_ADC6:
-			GPIOC->BSRRL |= GPIO_Pin_7 | GPIO_Pin_9; //turn on PC7-PC9
-			return 0;
-			break;
-		case Motor_Curr_ADC7:
-			GPIOC->BSRRL |= GPIO_Pin_8 | GPIO_Pin_9; //turn on PC8-PC9
-			return 0;
-			break;
-		case Motor_Curr_ADC8:
-			GPIOC->BSRRL |= GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9; //turn on PC7-PC9
-			return 0;
-			break;
-		default:
-			return 0;
-			break;
-	}
-}
-
-extern uint8_t get_motor_temp(motor_sensors_t motor_sensor_x) {
-	switch (motor_sensor_x) {
-		case Motor_Temp_ADC1:
-			GPIOD->BSRRL &= ~(GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9); //turn off PD7-PD9
-			return 0;
-			break;
-		case Motor_Temp_ADC2:
-			GPIOD->BSRRL |= GPIO_Pin_7; //turn on PD7
-			return 0;
-			break;
-		case Motor_Temp_ADC3:
-			GPIOD->BSRRL |= GPIO_Pin_8; //turn on PD8
-			return 0;
-			break;
-		case Motor_Temp_ADC4:
-			GPIOD->BSRRL |= GPIO_Pin_7 | GPIO_Pin_8; //turn on PD7-PD8
-			return 0;
-			break;
-		case Motor_Temp_ADC5:
-			GPIOD->BSRRL |= GPIO_Pin_9; //turn on PD9
-			return 0;
-			break;
-		case Motor_Temp_ADC6:
-			GPIOD->BSRRL |= GPIO_Pin_7 | GPIO_Pin_9; //turn on PD7-PD9
-			return 0;
-			break;
-		case Motor_Temp_ADC7:
-			GPIOD->BSRRL |= GPIO_Pin_8 | GPIO_Pin_9; //turn on PD8-PD9
-			return 0;
-			break;
-		case Motor_Temp_ADC8:
-			GPIOD->BSRRL |= GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9; //turn on PD7-PD9
-			return 0;
-			break;
-		default:
-			return 0;
-			break;
-	}
 }

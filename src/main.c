@@ -25,6 +25,7 @@ void blinkyTask(void *dummy){
 		GPIOA->ODR ^= GPIO_Pin_5;
 		/* Toggle at 1 HZ */
 		vTaskDelay(500);
+
 	}
 }
 
@@ -44,7 +45,7 @@ void vGeneralTaskInit(void){
 		configMINIMAL_STACK_SIZE,
 		NULL,                 // pvParameters
 		tskIDLE_PRIORITY + 1, // uxPriority
-		NULL              ); // pvCreatedTask */
+		NULL              ); // pvCreatedTask
 }
 
 int main(void)
@@ -52,7 +53,10 @@ int main(void)
 
 	init_LED();
 	init_motors();
+	//init_I2C_Sensors();
+	init_ADC();
 	FSM_Init();
+
 	vGeneralTaskInit();
 	init_I2C_Sensors();
 	vTaskStartScheduler();

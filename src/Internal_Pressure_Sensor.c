@@ -77,20 +77,5 @@ extern uint32_t Update_Internal_Pressure() {
 			internalPressure = (double)(((int64_t)internalPressure * (double)sens/2097152) - off)/(32768);
 
 			return internalPressure; //returns relative humidity %
-}
-
-extern void init_internal_presure_sensor() {
-
-		for(uint8_t i = 0; i < 6; i++) {
-
-			uint8_t temp_cmd_var = PROM_C1_ADDRESS + (i*2);
-
-			I2C_write(SENSOR_ADDRESS, 1, &temp_cmd_var);
-			ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(I2C_TIMEOUT));
-
-			I2C_read(SENSOR_ADDRESS, 2, (uint8_t *)&promRegister[i]);
-			ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(I2C_TIMEOUT));
-			promRegister[i] = switch_endiness_uint16(promRegister[i]);
-	}
 
 }
