@@ -16,6 +16,7 @@
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "ADC.h"
 #include "I2C.h"
 #include "I2C_Sensors.h"
 
@@ -53,12 +54,11 @@ int main(void)
 
 	init_LED();
 	init_motors();
-	//init_I2C_Sensors();
+	init_I2C_Sensors();
 	init_ADC();
 	FSM_Init();
 
 	vGeneralTaskInit();
-	init_I2C_Sensors();
 	vTaskStartScheduler();
 
 	//Should never get here

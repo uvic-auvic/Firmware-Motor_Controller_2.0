@@ -307,7 +307,6 @@ extern void FSM(void *dummy){
 
 		// TMP command
 		else if(strcmp(commandString, "TMP") == 0) {
-			uint16_t temperature = 0x00FF;
 
 			while(UART_push_out_len((char *)&temperature, 2) == -2);
 			while(UART_push_out("\r\n") == -2);
@@ -315,15 +314,15 @@ extern void FSM(void *dummy){
 
 		// TMH command
 		else if(strcmp(commandString, "TMH") == 0) {
-			char *temperature = "-020.5";
+			char tempOutput[7] = {};
+			itoa(temperature, tempOutput, 10);
 
-			while(UART_push_out(temperature) == -2);
+			while(UART_push_out(tempOutput) == -2);
 			while(UART_push_out("\r\n") == -2);
 		}
 
 		// HUM command
 		else if(strcmp(commandString, "HUM") == 0) {
-			uint8_t humidity = 0xFF;
 
 			while(UART_push_out_len((char *)&humidity, 1) == -2);
 			while(UART_push_out("\r\n") == -2);
@@ -331,25 +330,26 @@ extern void FSM(void *dummy){
 
 		// HUH command
 		else if(strcmp(commandString, "HUH") == 0) {
-			char *humidity = "100";
+			char tempOutput[4] = {};
+			itoa(humidity, tempOutput, 10);
 
-			while(UART_push_out(humidity) == -2);
+			while(UART_push_out(tempOutput) == -2);
 			while(UART_push_out("\r\n") == -2);
 		}
 
 		// SCH command
 		else if(strcmp(commandString, "SCH") == 0) {
-			char *current = "100.000";
+			char tempOutput[4] = {};
+			uint_to_ASCII_with_decimal(tempOutput, supply_current, 3, 6);
 
-			while(UART_push_out(current) == -2);
+			while(UART_push_out(tempOutput) == -2);
 			while(UART_push_out("\r\n") == -2);
 		}
 
 		//SCM command
 		else if(strcmp(commandString, "SCM") == 0) {
-			int32_t current = 0x00FF00FF;
 
-			while(UART_push_out_len((char *)&current, 3) == -2);
+			while(UART_push_out_len((char *)&supply_current, 3) == -2);
 			while(UART_push_out("\r\n") == -2);
 		}
 
