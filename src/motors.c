@@ -1,5 +1,8 @@
 #include "stm32f4xx.h"
 #include "motors.h"
+#include "FreeRTOSConfig.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #define _100_MHZ	(100 * 1000 * 1000)
 #define _10_MHZ		(10 * 1000 * 1000)
@@ -12,11 +15,16 @@
 #define PULSE_PER_ROTATION	7
 #define FREQ_TO_RPM_CONV	((float)60 / (PULSE_PER_ROTATION))
 #define INTERNAL_OSC_CALIB	1 // In case we decide to adjust for the manufacturing error in the internal clock
+#define MIN_RPM_PERIOD_MS	300 /* Equivalent to 200 RPM */
 
 //PWM Out Defines
 #define NEUTRAL				(3600)
 #define PWM_OUT_PRESCALER	(42 - 1)
 #define PWM_OUT_PERIOD		(40000 - 1)
+
+#if ((PWM_IN_ARRAY_LENGTH %2) == 1)
+#error PWM_IN_ARRAY_LENGTH must be a multiple of 2
+#endif
 
 
 /* Global Variables
@@ -371,6 +379,64 @@ extern void stop_all_motors(){
 	motor_set_speed_percent(Motor8, 0, Forward); //PB0
 }
 
+/* This task is used to check to see if a motor has stopped spinning
+ * If a motor stops spinning, then the timestamps won't be updated for an
+ * extended period of time. This task checks to see if that condition occurs, and
+ * ensures the next RPM reading will be 0 RPM
+ */
+void rpm_monitor_task(void* dummy) {
+	/*
+	 * Below is the motor to DMA mapping for RPMs
+	 * Motor 1 - DMA1 Stream4 CH6
+	 * Motor 2 - DMA1 Stream0 CH6
+	 * Motor 3 - DMA2 Stream4 CH6
+	 * Motor 4 - DMA2 Stream2 CH6
+	 * Motor 5 - DMA1 Stream7 CH2
+	 * Motor 6 - DMA1 Stream3 CH2
+	 * Motor 7 - DMA1 Stream5 CH5
+	 * Motor 8 - DMA1 Stream2 CH5
+	 */
+	volatile uint32_t *motorToDMA_NTDR[NUMBER_OF_MOTORS] = {
+		&DMA1_Stream4->NDTR,
+		&DMA1_Stream0->NDTR,
+		&DMA2_Stream4->NDTR,
+		&DMA2_Stream2->NDTR,
+		&DMA1_Stream7->NDTR,
+		&DMA1_Stream3->NDTR,
+		&DMA1_Stream5->NDTR,
+		&DMA1_Stream2->NDTR
+	};
+
+	uint8_t motor_indices[NUMBER_OF_MOTORS];
+	uint32_t motor_timestamps[NUMBER_OF_MOTORS];
+	TickType_t previous_time = 0;
+
+	while(1) {
+		/* Update the motor indices and timestamps */
+		for(int i = 0; i < NUMBER_OF_MOTORS; i++) {
+			motor_indices[i] = *motorToDMA_NTDR[i];
+			motor_timestamps[i] = pwmInTimestamp[i][motor_indices[i]];
+		}
+
+		/* Wait for the longest period before the motors should turn off */
+		vTaskDelayUntil(&previous_time, MIN_RPM_PERIOD_MS);
+
+		/* Check to see if there are any motors that didn't have an updated timestamp */
+		for(int i = 0; i < NUMBER_OF_MOTORS; i++) {
+			/* Check to see if index is the same */
+			if(motor_indices[i] == *motorToDMA_NTDR[i]) {
+				/* To make check better, check to see if timestamp is the same */
+				if(motor_timestamps[i] == pwmInTimestamp[i][motor_indices[i]]) {
+					/* Set all entries of the buffer to last time recorded */
+					for(int j = 0; j < PWM_IN_ARRAY_LENGTH; j++) {
+						pwmInTimestamp[i][j] = motor_timestamps[i];
+					}
+				}
+			}
+		}
+	}
+}
+
 /* Extern declarations in each section must go below static declarations */
 extern void init_motors() {
 	/* Initialize sub-modules */
@@ -381,6 +447,14 @@ extern void init_motors() {
 	enable_timers();
 
 	stop_all_motors();
+
+	// Create the RPM monitor task
+	xTaskCreate(rpm_monitor_task,
+		(const char *)"rpm_monitor_task",
+		configMINIMAL_STACK_SIZE,
+		NULL,                 // pvParameters
+		tskIDLE_PRIORITY + 1, // uxPriority
+		NULL              ); // pvCreatedTask */
 }
 
 /* Robert's section.
@@ -490,7 +564,7 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 	 * Motor 7 - TIM3 CH2
 	 * Motor 8 - TIM3 CH4
 	 */
-	static uint16_t *motorToTIM_DIER[NUMBER_OF_MOTORS] = { &TIM5->DIER,
+	static volatile uint16_t *motorToTIM_DIER[NUMBER_OF_MOTORS] = { &TIM5->DIER,
 														   &TIM5->DIER,
 														   &TIM1->DIER,
 														   &TIM1->DIER,
@@ -519,7 +593,7 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 	 * Motor 7 - DMA1 Stream5 CH5
 	 * Motor 8 - DMA1 Stream2 CH5
 	 */
-	static uint32_t *motorToDMA_NTDR[NUMBER_OF_MOTORS] = { &DMA1_Stream4->NDTR,
+	static volatile uint32_t *motorToDMA_NTDR[NUMBER_OF_MOTORS] = { &DMA1_Stream4->NDTR,
 														   &DMA1_Stream0->NDTR,
 														   &DMA2_Stream4->NDTR,
 														   &DMA2_Stream2->NDTR,
@@ -532,32 +606,39 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 	*motorToTIM_DIER[motor_x - 1] &= ~motorToTIM_CCxDE[motor_x - 1];
 
 	uint8_t idx = PWM_IN_ARRAY_LENGTH - (*motorToDMA_NTDR[motor_x - 1]); //Index of array element that was most recently updated
-	uint8_t stop_idx = (idx + PWM_IN_ARRAY_LENGTH - 1) % PWM_IN_ARRAY_LENGTH; //Index of array element that is most out of date
+	uint8_t stop_idx = idx;
 	float frequency = 0;
 	int16_t rpm = 0;
 
-	for (; idx != stop_idx; idx = ((idx + 1) % PWM_IN_ARRAY_LENGTH)) {
+	// Average the time differences
+	do {
 		uint32_t diff = 0; // Temporarily store the difference between two timestamps
 
-		if (pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH] > pwmInTimestamp[motor_x - 1][idx]) {
+		if (pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH] >= pwmInTimestamp[motor_x - 1][idx]) {
 			diff = pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH]	- pwmInTimestamp[motor_x - 1][idx];
 
 		} else { //if not bigger, must be smaller
 			diff = (_100_MHZ - pwmInTimestamp[motor_x - 1][idx]) + pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH];
 		}
 		frequency += diff; // Add the differences. Will be averaged later
-	}
+
+		/* Update the index */
+		idx = ((idx + 2) % PWM_IN_ARRAY_LENGTH);
+	} while(idx != stop_idx);
 
 	//make sure to turn the DMA back on
 	*motorToTIM_DIER[motor_x - 1] |= motorToTIM_CCxDE[motor_x - 1];
 
-	frequency = frequency / (PWM_IN_ARRAY_LENGTH - 1); // Average the timestamps
-	frequency = PWM_IN_TIMER_FREQ / frequency; // Convert timestamps to frequency
-	rpm = frequency * FREQ_TO_RPM_CONV * INTERNAL_OSC_CALIB; //Convert frequency to rpm and apply correction for internal oscillator
-	// Not checking for overflow. Motor RPM will likely never reach the 32767rpm.
+	// If frequency (which is actually period) is 0, then let RPM stay at zero
+	if(frequency) {
+		frequency = frequency / (PWM_IN_ARRAY_LENGTH / 2); // Average the timestamps
+		frequency = PWM_IN_TIMER_FREQ / frequency; // Convert timestamps to frequency
+		rpm = frequency * FREQ_TO_RPM_CONV * INTERNAL_OSC_CALIB; //Convert frequency to rpm and apply correction for internal oscillator
+		// Not checking for overflow. Motor RPM will likely never reach the 32767rpm.
 
-	if ((motorDirection >> (motor_x - 1)) & 0x1) { // If bit (motor_x - 2) is 0, motor is spinning forward, reverse otherwise
-		rpm *= -1;
+		if ((motorDirection >> (motor_x - 1)) & 0x1) { // If bit (motor_x - 2) is 0, motor is spinning forward, reverse otherwise
+			rpm *= -1;
+		}
 	}
 
 	return rpm;
