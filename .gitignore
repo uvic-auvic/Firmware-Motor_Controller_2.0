@@ -1,4 +1,5 @@
-<<<<<<< HEAD
+*.cfg
+
 # Object files
 *.o
 *.ko
@@ -33,12 +34,6 @@
 
 # Debug files
 *.dSYM/
-
-# Auto Generated Files
-*.cfg
-STM32F411VET6.xml
-STM32F411E-DISCO.xml
-.settings/*
 
 # =========================
 # Operating System Files
@@ -96,7 +91,3 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-=======
-/Debug/
-/Release/
->>>>>>> origin/master
