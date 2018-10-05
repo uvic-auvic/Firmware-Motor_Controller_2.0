@@ -4,28 +4,27 @@
 typedef struct PID_controller {
     uint16_t P, I, D;
     uint32_t error;
-    uint32_t errorSum, lastError;
-    uint32_t output, lastOutput;
-    uint32_t lastTime;
-    uint16_t integralLimit, epsilon;
-    uint16_t dTime;
+    uint32_t error_sum, last_error;
+    uint32_t output, last_output;
+    uint32_t last_time;
+    uint16_t integral_limit, epsilon;
+    uint16_t dt;
 } PID_controller_t;
+
+/* TODO: Add delay for overall PID update loop task */
 
 /**
  * Initializes the PID controller with the
  * provided values. There are many
  *
- * @param pid           The PID controller to initialize
- * @param kP            The P value for the controller
- * @param kI            The I value for the controller
- * @param kD            The D value for the controller
- * @param integralLimit The integral limit
- * @param epsilon       The epsilon value
- * @param slewRate      The slew rate
- * @param zeroOnCross   Reset integral term on zero cross
- * @param refreshRate   The delay between loops
+ * @param pid            The PID controller to initialize
+ * @param kP             The P value for the controller
+ * @param kI             The I value for the controller
+ * @param kD             The D value for the controller
+ * @param integral_limit The integral limit
+ * @param epsilon        The epsilon value
  */
-extern void PID_init(PID_controller_t *pid, uint32_t kP, uint32_t kI,
+static void PID_init(PID_controller_t *pid, uint32_t kP, uint32_t kI,
         uint32_t kD, uint16_t integral_limit, uint16_t epsilon);
 
 /**
@@ -34,7 +33,7 @@ extern void PID_init(PID_controller_t *pid, uint32_t kP, uint32_t kI,
  *
  * @param pid The controller to reset
  */
-extern void PID_reset(PID_controller_t *pid);
+static void PID_reset(PID_controller_t *pid);
 
 /**
  * Computes the overall PID output using the
@@ -44,6 +43,6 @@ extern void PID_reset(PID_controller_t *pid);
  * @param error Error to use for the calculation
  * @return The output value of the PID controller
  */
-extern uint32_t PID_calculate(PID_controller_t *pid, uint32_t error);
+static uint32_t PID_calculate(PID_controller_t *pid, uint32_t error);
 
 #endif
