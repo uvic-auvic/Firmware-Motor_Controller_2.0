@@ -9,7 +9,7 @@
 #include "simple_UART.h"
 #include "stm32f4xx.h"
 #include "FreeRTOS.h"
-#include "Task.h"
+#include "task.h"
 #include "Buffer.h"
 #include <string.h>
 

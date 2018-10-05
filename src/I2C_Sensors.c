@@ -10,7 +10,7 @@
 #include "task.h"
 #include "INA226_Current_Sensor.h"
 #include "Internal_Pressure_Sensor.h"
-#include "SI7021_temp_humidity_sensor.h"
+#include "Si7021_temp_humidity_sensor.h"
 #include "I2C.h"
 
 //Global variables for I2C sensors values
