@@ -128,6 +128,14 @@ int asciiToInt(char input[], uint8_t length) {
 	return output;
 }
 
+int intToAscii_int16(char *output, uint16_t num) {
+
+	for(int8_t i = 4; i >= 0; i--) {
+		output[i] = (char)((num % 10) + '0');
+		num /= 10;
+	}
+}
+
 void uint_to_ASCII_with_decimal(char *asciiString, uint32_t value, int8_t numOfDecimal, int8_t numOfDigits) {
 	//TO DO: Return error codes
 
@@ -250,9 +258,9 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else {
-				char bufs[5] = {};
+				char bufs[5] = {'0', '0', '0', '0', '0'};
 				uint16_t rpm = motor_get_rpm(motorNumber);
-				itoa(rpm, bufs, 10);
+				intToAscii_int16(bufs, rpm);
 				while(UART_push_out_len(bufs, 5) == -2);
 				while(UART_push_out_len("\r\n", 2) == -2);
 			}
