@@ -19,4 +19,6 @@ extern void pid_reset(motors_t motor_x);
  */
 extern void pid_update_rpm(motors_t motor_x, int16_t rpm);
 
+extern void pid_update_motor_speed_percent(motors_t motor_x, uint16_t percent, direction_t dir);
+
 #endif

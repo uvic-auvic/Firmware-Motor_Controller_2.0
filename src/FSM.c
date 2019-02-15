@@ -14,6 +14,7 @@
 #include "motors.h"
 #include "ADC.h"
 #include "I2C_Sensors.h"
+#include "PID.h"
 
 #define NUMBER_OF_MOTORS	8
 
@@ -188,7 +189,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
-				motor_set_speed_percent(motorNumber, argument * 10, Forward);
+				pid_update_motor_speed_percent(motorNumber, argument * 10, Forward);
 			}
 		}
 
@@ -207,7 +208,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_ARG_IVD\r\n") == -2);
 
 			} else {
-				motor_set_speed_percent(motorNumber, argument * 10, Reverse);
+				pid_update_motor_speed_percent(motorNumber, argument * 10, Reverse);
 
 			}
 		}
@@ -286,7 +287,7 @@ extern void FSM(void *dummy){
 				while(UART_push_out("ERR_MTR_IVD\r\n") == -2);
 
 			} else {
-				motor_set_speed_percent(motorNumber, 0, Forward);
+				pid_update_motor_speed_percent(motorNumber, 0, Forward);
 				while(UART_push_out("ACK\r\n") == -2);
 			}
 		}
@@ -356,7 +357,7 @@ extern void FSM(void *dummy){
 		//TMx Command
 		else if(strncmp(commandString, "TM", 2) == 0 && strlen(commandString) == TM_COMMAND_LENGTH){
 			uint16_t temperature;
-			ADC_sensors_t ADC_sensor;
+
 			if(commandString[TM_MOTOR_NUMBER_LOCATION] == 'A'){
 				ADC_sensors_t ADC_sensor;
 				for(ADC_sensor = Temp_ADC1; ADC_sensor <= Temp_ADC8; ADC_sensor++){
@@ -438,9 +439,9 @@ extern void FSM(void *dummy){
 				uint8_t speed_idx = direction_idx + 1;
 				uint8_t speed = asciiToInt(&commandString[speed_idx], 2);
 				if(commandString[direction_idx] == 'F'){
-					motor_set_speed_percent(motor, (speed * 10), Forward);
+					pid_update_motor_speed_percent(motor, (speed * 10), Forward);
 				}else if (commandString[direction_idx] == 'R'){
-					motor_set_speed_percent(motor, (speed * 10), Reverse);
+					pid_update_motor_speed_percent(motor, (speed * 10), Reverse);
 				}else{
 					//If we don't see R or F let's do nothing
 				}
@@ -455,9 +456,9 @@ extern void FSM(void *dummy){
 				uint8_t speed_idx = direction_idx + 1;
 				uint16_t speed = asciiToInt(&commandString[speed_idx], 3);
 				if(commandString[direction_idx] == 'F'){
-					motor_set_speed_percent(motor, speed, Forward);
+					pid_update_motor_speed_percent(motor, speed, Forward);
 				}else if (commandString[direction_idx] == 'R'){
-					motor_set_speed_percent(motor, speed, Reverse);
+					pid_update_motor_speed_percent(motor, speed, Reverse);
 				}else{
 					//If we don't see R or F let's do nothing
 				}

@@ -1,15 +1,17 @@
 #ifndef MOTORS_H_
 #define MOTORS_H_
 
+#define MAX_MOTOR_RPM	(1000)
+
 typedef enum motors {
-	Motor1 = 1,
-	Motor2,
-	Motor3,
-	Motor4,
-	Motor5,
-	Motor6,
-	Motor7,
-	Motor8
+	MOTOR_1,
+	MOTOR_2,
+	MOTOR_3,
+	MOTOR_4,
+	MOTOR_5,
+	MOTOR_6,
+	MOTOR_7,
+	MOTOR_8
 } motors_t;
 
 typedef enum direction {

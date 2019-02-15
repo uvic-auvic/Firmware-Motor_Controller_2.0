@@ -19,6 +19,7 @@
 #include "ADC.h"
 #include "I2C.h"
 #include "I2C_Sensors.h"
+#include "PID.h"
 
 void blinkyTask(void *dummy){
 	while(1){
@@ -30,19 +31,16 @@ void blinkyTask(void *dummy){
 	}
 }
 
-void updateRPM(void *dummy){
-	uint32_t d = 0;
-
-	GPIOA->ODR |= GPIO_Pin_4;
-	while(1){
-		GPIOA->ODR ^= GPIO_Pin_4 | GPIO_Pin_5;
-		vTaskDelay(500);
-	}
-}
-
 void vGeneralTaskInit(void){
 	xTaskCreate(blinkyTask,
 		(const signed char *)"blinkyTask",
+		configMINIMAL_STACK_SIZE,
+		NULL,                 // pvParameters
+		tskIDLE_PRIORITY + 1, // uxPriority
+		NULL              ); // pvCreatedTask
+
+	xTaskCreate(pid_update,
+		(const signed char *)"pid_update",
 		configMINIMAL_STACK_SIZE,
 		NULL,                 // pvParameters
 		tskIDLE_PRIORITY + 1, // uxPriority

@@ -302,49 +302,49 @@ static void init_PWM_in_DMA() {
 
 	// DMA Configuration: Motor 1, PA1, TIM5_CH2, DMA1 Stream4 Channel6
 	DMA_InitStructure.DMA_Channel = DMA_Channel_6;
-	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) pwmInTimestamp[Motor1 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) pwmInTimestamp[MOTOR_1];
 	DMA_Init(DMA1_Stream4, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream4, ENABLE); //Enable the DMA1 - Stream 4
 
 	// DMA Configuration: Motor 2, PA2, TIM5_CH3, DMA1 Stream0 Channel6
 	DMA_InitStructure.DMA_Channel = DMA_Channel_6;
-	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor2 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[MOTOR_2];
 	DMA_Init(DMA1_Stream0, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream0, ENABLE); //Enable the DMA1 - Stream 0
 
 	// DMA Configuration: Motor 3, PA11, TIM1_CH4, DMA2 Stream4 Channel6
 	DMA_InitStructure.DMA_Channel = DMA_Channel_6;
-	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor3 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[MOTOR_3];
 	DMA_Init(DMA2_Stream4, &DMA_InitStructure);
 	DMA_Cmd(DMA2_Stream4, ENABLE); //Enable the DMA2 - Stream 4
 
 	// DMA Configuration: Motor 4, PA9, TIM1_CH2, DMA2 Stream2 Channel6
 	DMA_InitStructure.DMA_Channel = DMA_Channel_6;
-	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor4 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[MOTOR_4];
 	DMA_Init(DMA2_Stream2, &DMA_InitStructure);
 	DMA_Cmd(DMA2_Stream2, ENABLE); //Enable the DMA2 - Stream 2
 
 	// DMA Configuration: Motor 5, PD14, TIM4_CH3, DMA1 Stream7 Channel2
 	DMA_InitStructure.DMA_Channel = DMA_Channel_2;
-	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor5 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[MOTOR_5];
 	DMA_Init(DMA1_Stream7, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream7, ENABLE); //Enable the DMA1 - Stream 7
 
 	// DMA Configuration: Motor 6, PD13, TIM4_CH2, DMA1 Stream3 Channel2
 	DMA_InitStructure.DMA_Channel = DMA_Channel_2;
-	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor6 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[MOTOR_6];
 	DMA_Init(DMA1_Stream3, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream3, ENABLE); //Enable the DMA1 - Stream 3
 
 	// DMA Configuration: Motor 7, PA7, TIM3_CH2, DMA1 Stream5 Channel5
 	DMA_InitStructure.DMA_Channel = DMA_Channel_5;
-	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor7 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[MOTOR_7];
 	DMA_Init(DMA1_Stream5, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream5, ENABLE); //Enable the DMA1 - Stream 5
 
 	// DMA Configuration: Motor 8, PB1, TIM3_CH4, DMA1 Stream2 Channel5
 	DMA_InitStructure.DMA_Channel = DMA_Channel_5;
-	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[Motor8 - 1];
+	DMA_InitStructure.DMA_Memory0BaseAddr =	(uint32_t) pwmInTimestamp[MOTOR_8];
 	DMA_Init(DMA1_Stream2, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Stream2, ENABLE); //Enable the DMA1 - Stream 2
 
@@ -369,14 +369,10 @@ static void enable_timers() {
 }
 
 extern void stop_all_motors(){
-	motor_set_speed_percent(Motor1, 0, Forward); //PA1
-	motor_set_speed_percent(Motor2, 0, Forward); //PA3
-	motor_set_speed_percent(Motor3, 0, Forward); //PA10
-	motor_set_speed_percent(Motor4, 0, Forward); //PA8
-	motor_set_speed_percent(Motor5, 0, Forward); //PD14
-	motor_set_speed_percent(Motor6, 0, Forward); //PD12
-	motor_set_speed_percent(Motor7, 0, Forward); //PA6
-	motor_set_speed_percent(Motor8, 0, Forward); //PB0
+
+	for(motors_t motor = MOTOR_1; motor < NUMBER_OF_MOTORS; motor += 1) {
+		pid_update_rpm(motor, 0);
+	}
 }
 
 /* This task is used to check to see if a motor has stopped spinning
@@ -465,6 +461,10 @@ extern void init_motors() {
 /* Put any static/hidden functions your code may need below here: */
 
 /* Robert's extern/visible functions go below here: */
+
+/**
+ * @param	speed	percent in 10^1
+ */
 extern void motor_set_speed_percent(motors_t motor_x, uint16_t speed, direction_t dir)
 {
 	uint16_t cc_value = (speed * 12)/10;
@@ -475,28 +475,28 @@ extern void motor_set_speed_percent(motors_t motor_x, uint16_t speed, direction_
 	}
 
 	switch(motor_x){
-		case Motor1:
+		case MOTOR_1:
 			TIM_SetCompare1(TIM2, cc_value);
 			break;
-		case Motor2:
+		case MOTOR_2:
 			TIM_SetCompare4(TIM2, cc_value);
 			break;
-		case Motor3:
+		case MOTOR_3:
 			TIM_SetCompare3(TIM1, cc_value);
 			break;
-		case Motor4:
+		case MOTOR_4:
 			TIM_SetCompare1(TIM1, cc_value);
 			break;
-		case Motor5:
+		case MOTOR_5:
 			TIM_SetCompare4(TIM4, cc_value);
 			break;
-		case Motor6:
+		case MOTOR_6:
 			TIM_SetCompare1(TIM4, cc_value);
 			break;
-		case Motor7:
+		case MOTOR_7:
 			TIM_SetCompare1(TIM3, cc_value);
 			break;
-		case Motor8:
+		case MOTOR_8:
 			TIM_SetCompare3(TIM3, cc_value);
 			break;
 	}
@@ -512,28 +512,28 @@ extern void set_PWM(motors_t motor_x, uint16_t percent) {
 	uint32_t cc_value = ((percent * (PWM_OUT_PERIOD + 1)) / 1000);
 
 	switch(motor_x){
-		case Motor1:
+		case MOTOR_1:
 			TIM_SetCompare1(TIM2, cc_value);
 			break;
-		case Motor2:
+		case MOTOR_2:
 			TIM_SetCompare4(TIM2, cc_value);
 			break;
-		case Motor3:
+		case MOTOR_3:
 			TIM_SetCompare3(TIM1, cc_value);
 			break;
-		case Motor4:
+		case MOTOR_4:
 			TIM_SetCompare1(TIM1, cc_value);
 			break;
-		case Motor5:
+		case MOTOR_5:
 			TIM_SetCompare4(TIM4, cc_value);
 			break;
-		case Motor6:
+		case MOTOR_6:
 			TIM_SetCompare1(TIM4, cc_value);
 			break;
-		case Motor7:
+		case MOTOR_7:
 			TIM_SetCompare1(TIM3, cc_value);
 			break;
-		case Motor8:
+		case MOTOR_8:
 			TIM_SetCompare3(TIM3, cc_value);
 			break;
 	}
@@ -603,9 +603,9 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 														   &DMA1_Stream2->NDTR };
 
 	//need to stop raw data from updating
-	*motorToTIM_DIER[motor_x - 1] &= ~motorToTIM_CCxDE[motor_x - 1];
+	*motorToTIM_DIER[motor_x] &= ~motorToTIM_CCxDE[motor_x];
 
-	uint8_t idx = PWM_IN_ARRAY_LENGTH - (*motorToDMA_NTDR[motor_x - 1]); //Index of array element that was most recently updated
+	uint8_t idx = PWM_IN_ARRAY_LENGTH - (*motorToDMA_NTDR[motor_x]); //Index of array element that was most recently updated
 	uint8_t stop_idx = idx;
 	float frequency = 0;
 	int16_t rpm = 0;
@@ -614,11 +614,11 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 	do {
 		uint32_t diff = 0; // Temporarily store the difference between two timestamps
 
-		if (pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH] >= pwmInTimestamp[motor_x - 1][idx]) {
-			diff = pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH]	- pwmInTimestamp[motor_x - 1][idx];
+		if (pwmInTimestamp[motor_x][(idx + 1) % PWM_IN_ARRAY_LENGTH] >= pwmInTimestamp[motor_x][idx]) {
+			diff = pwmInTimestamp[motor_x][(idx + 1) % PWM_IN_ARRAY_LENGTH]	- pwmInTimestamp[motor_x][idx];
 
 		} else { //if not bigger, must be smaller
-			diff = (_100_MHZ - pwmInTimestamp[motor_x - 1][idx]) + pwmInTimestamp[motor_x - 1][(idx + 1) % PWM_IN_ARRAY_LENGTH];
+			diff = (_100_MHZ - pwmInTimestamp[motor_x][idx]) + pwmInTimestamp[motor_x][(idx + 1) % PWM_IN_ARRAY_LENGTH];
 		}
 		frequency += diff; // Add the differences. Will be averaged later
 
@@ -627,7 +627,7 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 	} while(idx != stop_idx);
 
 	//make sure to turn the DMA back on
-	*motorToTIM_DIER[motor_x - 1] |= motorToTIM_CCxDE[motor_x - 1];
+	*motorToTIM_DIER[motor_x] |= motorToTIM_CCxDE[motor_x];
 
 	// If frequency (which is actually period) is 0, then let RPM stay at zero
 	if(frequency) {
@@ -636,7 +636,7 @@ extern int16_t motor_get_rpm(motors_t motor_x) {
 		rpm = frequency * FREQ_TO_RPM_CONV * INTERNAL_OSC_CALIB; //Convert frequency to rpm and apply correction for internal oscillator
 		// Not checking for overflow. Motor RPM will likely never reach the 32767rpm.
 
-		if ((motorDirection >> (motor_x - 1)) & 0x1) { // If bit (motor_x - 2) is 0, motor is spinning forward, reverse otherwise
+		if ((motorDirection >> (motor_x)) & 0x1) { // If bit (motor_x - 2) is 0, motor is spinning forward, reverse otherwise
 			rpm *= -1;
 		}
 	}
