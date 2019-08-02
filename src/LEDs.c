@@ -1,12 +1,23 @@
-/*
- * LEDs.c
- *
- *  Created on: Aug 13, 2017
- *      Author: auvic
- */
+/************************************************************************
+  * @file    LEDs.c
+  * @author  Andy Bates
+  * @version V1.0.0
+  * @date    13-August-2017
+  * @brief   This file contains the LED and PWM init functions.
+  * 
+  *  @verbatim
+  *  @endverbatim
+  */
 
+/* Includes -----------------------------------------------------------*/
 #include "stm32f4xx_gpio.h"
 
+/**
+  * @user	None
+  * @brief  Configure PA4 (Red) and PA5 (Blue) to blinkat 2/50 MHz
+  * @param  None
+  * @retval None
+  */
 extern void init_LED(){
 	GPIO_InitTypeDef GPIO_InitStructure;
 

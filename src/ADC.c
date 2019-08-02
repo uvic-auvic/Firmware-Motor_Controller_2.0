@@ -1,3 +1,17 @@
+/************************************************************************
+  * @file    ADC.c
+  * @author  Andy Bates, Poorna Kalindas, Robert Keen, Gabriel Green
+  * @version V1.0.0
+  * @date    1-August-2019
+  * @brief   This file contains the ADC configuration functions.
+  * 
+  *  @verbatim
+  *  @endverbatim
+  ***********************************************************************/
+
+ /************************************************************************
+ * Includes
+ ************************************************************************/
 #include "stm32f4xx.h"
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
@@ -5,12 +19,16 @@
 #include "ADC.h"
 #include "stdlib.h"
 
+ /************************************************************************
+ * Global Variables
+ ************************************************************************/
 uint16_t ADC_Values[SENSOR_QUANTITY][AMMOUNT_OF_RECORDED_VALUES];
 uint8_t Read_Position;
 uint8_t ADC_count;
 ADC_sensors_t ADC_sensor = Curr_ADC1;
 
-static void init_motor_current_temp_MUX() {
+
+static void init_motor_current_temp_MUX(){
 	//Enable clock
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);

@@ -1,9 +1,17 @@
-/*
- * FSM.c
- *
- *  Created on: Feb 3, 2017
- *      Author: asus-andy
- */
+/************************************************************************
+  * @file    FSM.c
+  * @author  Andy Bates, Poorna Kalidas, Robert Keen
+  * @version V1.0.0
+  * @date    3-Feb-2017 - Summer 2018
+  * @brief   This file provides the Finite State Machine
+  * 
+  *  @verbatim
+  *  @endverbatim
+  ***********************************************************************/
+ 
+ /************************************************************************
+ * Includes
+ ************************************************************************/
 #include <stdlib.h>
 #include "FSM.h"
 #include "Buffer.h"
@@ -15,103 +23,137 @@
 #include "ADC.h"
 #include "I2C_Sensors.h"
 
+/************************************************************************
+ * Definitions
+ ************************************************************************/
+/**	@brief  The following defines are determined using the input command 
+  * 		structure. Currently, this is stored in the Wiki section of 
+  * 		the GitHub repository for this code
+  */
 #define NUMBER_OF_MOTORS	8
 
-/** The following defines are determined using the input command structure.
- * 	Currently, this is stored in the Wiki section of the GitHub repository for this code
- */
-// Motor Speed(MS) Commands (Motor forward and Motor reverse)
+/**	@brief  Motor Speed(MS) Commands (Motor forward and Motor reverse)
+  */
 #define MS_MOTOR_NUMBER_LOCATION 0x01
 #define MS_MOTOR_NUMBER_LENTGH	1
 #define MS_ARGUMENT_LOCATION	0x03
 #define MS_ARGUMENT_LENGTH		2
 #define MS_COMMAND_LENGTH		5
 
-// Pulse Width Modulation(PW) command
+/**	@brief  Pulse Width Modulation(PW) command
+  */
 #define PW_MOTOR_NUMBER_LOCATION	0x02
 #define PW_MOTOR_NUMBER_LENTGH		1
 #define PW_ARGUMENT_LOCATION		0x03
 #define PW_ARGUMENT_LENGTH			3
 #define PW_COMMAND_LENGTH			6
 
-// Stop Motor(SM) Command
+/**	@brief  Stop Motor(SM) Command
+  */
 #define SM_MOTOR_NUMBER_LOCATION	0x02
 #define SM_MOTOR_NUMBER_LENTGH		1
 #define SM_COMMAND_LENGTH			3
 
-// Revolutions on motor(RV) Command
+/**	@brief  Revolutions on motor(RV) Command
+  */ 
 #define RV_MOTOR_NUMBER_LOCATION	0x02
 #define RV_MOTOR_NUMBER_LENTGH		1
 #define RV_COMMAND_LENGTH			3
 
-// Calibrate Motor(CL) command
+/**	@brief  Calibrate Motor(CL) command
+  */
 #define CL_MOTOR_NUMBER_LOCATION	0x02
 #define CL_MOTOR_NUMBER_LENTGH		1
 #define CL_COMMAND_LENGTH			3
 
-//Motor Current(MC) command
+/**	@brief  Motor Current(MC) command
+  */
 #define MC_MOTOR_NUMBER_LOCATION	0x02
 #define MC_MOTOR_NUMBER_LENGTH		1
 #define MC_COMMAND_LENGTH			3
 
-//Return Water(WTR) command
+/**	@brief  Return Water(WTR) command
+  */
 #define WTR_COMMAND_LENGTH	3
 
-//Return Water Human Readable (WTH) command
+/**	@brief  Return Water Human Readable (WTH) command
+  */
 #define WTH_COMMAND_LENGTH	3
 
-// STP command
+/**	@brief  STP command
+  */
 #define STP_COMMAND_LENGTH	3
 
-// RID command
+/**	@brief  RID command
+  */
 #define RID_COMMAND_LENGTH	3
 
-//Temperature Motor(TM) command
+/**	@brief  MTemperature Motor(TM) command
+  */
 #define TM_MOTOR_NUMBER_LOCATION	0x02
 #define TM_MOTOR_NUMBER_LENTGH		1
 #define TM_COMMAND_LENGTH			3
 
-//Temperature Sensor(TMP) command
+/**	@brief  Temperature Sensor(TMP) command
+  */
 #define TMP_COMMAND_LENGTH			3
 
-//Temperature Sensor Human Readable(TMH) command
+/**	@brief  Temperature Sensor Human Readable(TMH) command
+  */
 #define TMH_COMMAND_LENGTH			3
 
-//Humidity(HUM) command
+/**	@brief  Humidity(HUM) command
+  */
 #define HUM_COMMAND_LENGTH			3
 
-//Humidity Human Readable(HUH)
+/**	@brief  Humidity Human Readable(HUH)
+  */
 #define HUH_COMMAND_LENGTH			3
 
-//System Current Human Readable(SCH)
+/**	@brief  System Current Human Readable(SCH)
+  */
 #define SCH_COMMAND_LENGTH			3
 
-//System Current(SCM)
+/**	@brief  System Current(SCM)
+  */
 #define SCM_COMMAND_LENGTH			3
 
-//Internal Pressure(PIM)
+/**	@brief  Internal Pressure(PIM)
+  */
 #define PIN_COMMAND_LENGTH			3
 
-//Internal Pressure Human Readable(PIH)
+/**	@brief  Internal Pressure Human Readable(PIH)
+  */
 #define	PIH_COMMAND_LENGTH			3
 #define PIH_OUTPUT_LENGTH			7
 
-//MSA command
+/**	@brief  MSA command
+  */
 #define	MSA_COMMAND_LENGTH_2ARG	(3 + (NUMBER_OF_MOTORS * 3))
 #define	MSA_COMMAND_LENGTH_3ARG	(3 + (NUMBER_OF_MOTORS * 4))
 #define MSA_3ARG_MOTOR_NUMBER_LOCATION 0x4
 #define MSA_3ARG_MOTOR_DIRECTION_LOCATION 0x3
 
-/* Global Variables */
-//UART input commands buffer.
+/************************************************************************
+ * global Variables
+ ************************************************************************/
+
+/**	@brief  UART input commands buffer.
+  */
 extern Buffer_t inputBuffer;
 
-/** Converts ASCII to Integer for positive numbers and zero
- * Returns:
- * 	ASCII number as an Integer (0 - 99), or
- * 	-1 - Error: ASCII character is not a number
- */
-int asciiToInt(char input[], uint8_t length) {
+/************************************************************************
+ * Functions
+ ************************************************************************/
+
+/** @brief  Converts ASCII to Integer for positive numbers and zero
+  * @user	None
+  * @param  char buffer
+  * 		+ unsigned 8 bit integer
+  * @retval ASCII number as an Integer (0 - 99)
+  * 		+ if failed - Error: ASCII character is not a number 
+  */
+int asciiToInt(char input[], uint8_t length){
 
 	int output = 0;
 
@@ -128,8 +170,15 @@ int asciiToInt(char input[], uint8_t length) {
 	return output;
 }
 
-void uint_to_ASCII_with_decimal(char *asciiString, uint32_t value, int8_t numOfDecimal, int8_t numOfDigits) {
-	//TO DO: Return error codes
+/** @brief  Converts unsigned int to ASCII with decimals
+  * @user	None
+  * @param  char pointer
+  * 		+ unsigned 32 bit int
+  * 		+ 8 bit integer
+  * @retval string of char
+  * @todo	Return error codes
+  */
+void uint_to_ASCII_with_decimal(char *asciiString, uint32_t value, int8_t numOfDecimal, int8_t numOfDigits){
 
 	int8_t i = numOfDigits;
 
@@ -148,6 +197,9 @@ void uint_to_ASCII_with_decimal(char *asciiString, uint32_t value, int8_t numOfD
 
 }
 
+/** @brief  Finite State Machine task (see comments for details)
+  * @user	None
+  */
 extern void FSM(void *dummy){
 
 	//initialize UART
@@ -476,6 +528,9 @@ extern void FSM(void *dummy){
 	}
 }
 
+/**@brief  initialize the Finite State Machine RTOS task
+  * @user	None
+  */
 void FSM_Init(){
 
 	// Create the FSM task
