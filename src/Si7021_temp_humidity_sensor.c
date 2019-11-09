@@ -60,7 +60,7 @@ extern uint16_t Update_Temperature() {
 		ulTaskNotifyTake(pdTRUE, I2C_TIMEOUT);
 
 		temperature = switch_endiness_uint16(temperature);
-		temperature = ((1757.2*temperature)/65536)+2263;
+		temperature = ((175.72*temperature)/65536)+226.3;
 
 		return temperature; //returns 10*temperature in Kelvins
 }

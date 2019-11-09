@@ -12,11 +12,14 @@
 #include "Internal_Pressure_Sensor.h"
 #include "Si7021_temp_humidity_sensor.h"
 #include "I2C.h"
+#include "simple_UART.h"
+#include "motors.h"
+
 
 //Global variables for I2C sensors values
-uint32_t supply_current = 0;
+uint32_t supplycurrent = 0;
 uint16_t temperature = 0;
-uint16_t humidity = 0;
+int16_t humidity = 0; //changed to signed because measurement can be negative
 uint32_t internalPressure = 0;
 
 static void update_I2C_Sensors(void *dummy) {
@@ -33,6 +36,15 @@ static void update_I2C_Sensors(void *dummy) {
 		internalPressure = Update_Internal_Pressure();
 		humidity = Update_Humidity();
 		temperature = Update_Temperature_From_Last_Reading();
+
+		// TODO: record sample temperature values and decide on a threshold.
+		if(temperature >= temperatureThreshold){
+			stop_all_motors();
+			UART_push_out("PME0");
+		}/*else if(humidity >= humidityThreshold ) {
+			stop_all_motors();
+			UART_push_out("PME0");
+		}*/
 		vTaskDelay(1000);
 	}
 }
